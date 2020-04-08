@@ -1,28 +1,40 @@
 # coding: utf-8
-from os.path import abspath, dirname, join
-from inspect import getsourcefile
-from core.modules import cfginfo
-from ui.console import terminal
-from sys import exit
+import os
+import inspect
+from core.modules.cfginfo import ConfigurationInformation
+from ui.console import terminal, argparser
+import sys
 import traceback
 from core.main.appsession import AppSession
 
 
 def main():
-    config_path = abspath(join(abspath(dirname(getsourcefile(lambda: 0))), "config.cfg"))
-    config_info = cfginfo.ConfigurationInformation(config_path)
+    root_path = os.path.abspath(
+                    os.path.dirname(
+                        inspect.getsourcefile(lambda: 0)))
+    print("Running script from: ", root_path)
+
+    config_path = os.path.abspath(os.path.join(root_path, "cfg", "config.cfg"))
+    config_info = ConfigurationInformation(config_path)
 
     info = ""
     trace = ""
     code = 0
 
+    credentials_file = None
+    arguments = argparser.get_arguments()
+    if arguments:
+        key = arguments.k
+        if key:
+            credentials_file = os.path.abspath(os.path.join(root_path, "cfg", "credentials"))
+
     if config_info.status_code != 0:
         terminal.show_error_message(config_info.status_description)
-        exit(config_info.status_code)
+        sys.exit(config_info.status_code)
     else:
         try:
-            appsession = AppSession(cfg=config_info)
-            appsession.execute()
+            app_session = AppSession(cfg=config_info, credentials=credentials_file)
+            app_session.execute()
         except Exception as e:
             info = str(e)
             trace = traceback.format_exc()
@@ -34,7 +46,7 @@ def main():
             print(info)
             if trace:
                 print(trace)
-            exit(code)
+            sys.exit(code)
 
 
 if __name__ == "__main__":

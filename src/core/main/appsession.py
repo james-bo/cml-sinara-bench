@@ -14,6 +14,10 @@ class AppSession(object):
             self.__handler = Handler(self)
         else:
             raise ValueError("No configuration information available")
+        if "credentials" in kwargs.keys():
+            self.__key_file = kwargs.get("credentials")
+        else:
+            self.__key_file = None
 
     @property
     def cfg(self):
@@ -30,6 +34,10 @@ class AppSession(object):
     @property
     def handler(self):
         return self.__handler
+
+    @property
+    def key_file_path(self):
+        return self.__key_file
 
     def execute(self):
         try:

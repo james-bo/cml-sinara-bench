@@ -1,7 +1,7 @@
 # coding: utf-8
 import enum
+import os
 from core.utils import cfgreader
-from os.path import isfile
 
 
 class ConfigurationInformationStatus(enum.Enum):
@@ -18,7 +18,7 @@ class ConfigurationInformationStatus(enum.Enum):
 class ConfigurationInformation(object):
 
     def __init__(self, path_to_config_file):
-        if isfile(path_to_config_file):
+        if os.path.isfile(path_to_config_file):
             self.__info = cfgreader.read_application_config(path_to_config_file)
             self.__file_exists = True
         else:
