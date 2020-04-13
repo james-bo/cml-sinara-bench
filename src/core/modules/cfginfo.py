@@ -13,6 +13,12 @@ class ConfigurationInformationStatus(enum.Enum):
                "description": "Valid configuration file"}
     NO_SERVER_URL_ERROR = {"code": 1,
                            "description": "Configuration file does not contain information about server address"}
+    NO_DATABASE_ERROR = {"code": 2,
+                         "description": "Configuration file does not contain information about database path"}
+    NO_LOCAL_STORAGE_ERROR = {"code": 3,
+                              "description": "Configuration file does not contain information about local storage"}
+    NO_SERVER_STORAGE_ERROR = {"code": 4,
+                               "description": "Configuration file does not contain information about server storage"}
 
 
 class ConfigurationInformation(object):
@@ -24,7 +30,10 @@ class ConfigurationInformation(object):
         else:
             self.__info = None
             self.__file_exists = False
-        self.__necessary_keys = ["backend address"]
+        self.__necessary_keys = ["backend address",
+                                 "database",
+                                 "local storage",
+                                 "server storage"]
 
     @property
     def full_information(self):
@@ -33,6 +42,18 @@ class ConfigurationInformation(object):
     @property
     def backend_address(self):
         return self.__info.get(self.__necessary_keys[0])
+
+    @property
+    def database(self):
+        return self.__info.get(self.__necessary_keys[1])
+
+    @property
+    def local_storage(self):
+        return self.__info.get(self.__necessary_keys[2])
+
+    @property
+    def server_storage(self):
+        return self.__info.get(self.__necessary_keys[3])
 
     @property
     def status_code(self):
@@ -49,4 +70,10 @@ class ConfigurationInformation(object):
             return ConfigurationInformationStatus.READING_ERROR
         if self.__necessary_keys[0] not in self.__info.keys():
             return ConfigurationInformationStatus.NO_SERVER_URL_ERROR
+        if self.__necessary_keys[1] not in self.__info.keys():
+            return ConfigurationInformationStatus.NO_DATABASE_ERROR
+        if self.__necessary_keys[2] not in self.__info.keys():
+            return ConfigurationInformationStatus.NO_LOCAL_STORAGE_ERROR
+        if self.__necessary_keys[3] not in  self.__info.keys():
+            return ConfigurationInformationStatus.NO_SERVER_STORAGE_ERROR
         return ConfigurationInformationStatus.SUCCESS

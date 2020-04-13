@@ -3,6 +3,7 @@ import requests
 from core.network.sender import Sender
 from core.network.handler import Handler
 from core.modules.authorization import Authorization
+from core.modules.cml_bench_manager import CMLBenchManager
 
 
 class AppSession(object):
@@ -10,7 +11,7 @@ class AppSession(object):
         if "cfg" in kwargs.keys():
             self.__configuration_information = kwargs.get("cfg")
             self.__http_session = requests.Session()
-            self.__sender = Sender(self, self.cfg)
+            self.__sender = Sender(self)
             self.__handler = Handler(self)
         else:
             raise ValueError("No configuration information available")
@@ -18,6 +19,11 @@ class AppSession(object):
             self.__key_file = kwargs.get("credentials")
         else:
             self.__key_file = None
+        self.__sid = 1234
+
+    @property
+    def sid(self):
+        return self.__sid
 
     @property
     def cfg(self):
@@ -42,7 +48,13 @@ class AppSession(object):
     def execute(self):
         try:
             authorization = Authorization(self)
-            authorization.cml_bench_sign_in()
+            status = authorization.cml_bench_sign_in()
+
+            if status:
+                search_id = 683992
+                cml_bench_manager = CMLBenchManager(self, search_id)
+                cml_bench_manager.get_list_of_submodels()
+
         except Exception as e:
             import traceback
             print(e)

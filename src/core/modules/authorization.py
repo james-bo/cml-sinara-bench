@@ -1,8 +1,6 @@
 # coding: utf-8
 from ui.console import terminal
 from core.modules.keyinfo import KeyFileInformation
-import os
-import inspect
 import sys
 
 

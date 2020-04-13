@@ -40,7 +40,7 @@ def main():
             trace = traceback.format_exc()
             code = -100
         else:
-            info = "Correct termination"
+            info = "Finished."
             code = 0
         finally:
             print(info)
