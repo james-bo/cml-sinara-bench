@@ -32,10 +32,18 @@ class CMLBenchManager(object):
             terminal.show_info_message("Cloned simulation ID: {}".format(cloned_simulation_id))
         return terminal.show_error_message("Failed to clone simulation")
 
-    def get_list_of_submodels(self):
+    def get_list_of_submodels_to_be_uploaded(self):
         terminal.show_info_message("Trying to get list of sumbodels for simulation with ID {}".format(self.search_id))
         data_manager = LocalDataManager(self.app_session)
         simulation = self.search_for_simulation()
         list_of_sumbodels = data_manager.get_submodels_list_from_database(simulation.get_parent_loadcase().tree_path)
         terminal.show_info_message("List of files to be uploaded: {}".format(str(list_of_sumbodels)))
         return list_of_sumbodels
+
+    def get_list_of_existing_sumbodels(self):
+        terminal.show_info_message("Trying to get list of existing submodels of simulation with ID {}".format(
+            self.search_id))
+        simulation = self.search_for_simulation()
+        list_of_submodels = simulation.get_list_of_submodels()
+        terminal.show_info_message("List of existing submodels: {}".format(str(list_of_submodels)))
+        return list_of_submodels

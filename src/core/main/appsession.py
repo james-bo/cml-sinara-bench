@@ -51,9 +51,10 @@ class AppSession(object):
             status = authorization.cml_bench_sign_in()
 
             if status:
-                search_id = 683992
+                search_id = 686462  # 683992
                 cml_bench_manager = CMLBenchManager(self, search_id)
-                cml_bench_manager.get_list_of_submodels()
+                cml_bench_manager.get_list_of_submodels_to_be_uploaded()
+                cml_bench_manager.get_list_of_existing_sumbodels()
 
         except Exception as e:
             import traceback
