@@ -54,7 +54,9 @@ class AppSession(object):
                 search_id = 686462  # 683992
                 cml_bench_manager = CMLBenchManager(self, search_id)
                 cml_bench_manager.get_list_of_submodels_to_be_uploaded()
-                cml_bench_manager.get_list_of_existing_sumbodels()
+                cml_bench_manager.get_list_of_existing_simulation_sumbodels()
+                cml_bench_manager.get_list_of_existing_server_storage_submodels()
+                cml_bench_manager.upload_submodels_to_server_storage()
 
         except Exception as e:
             import traceback

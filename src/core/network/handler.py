@@ -11,6 +11,8 @@ class Handler(object):
     def set_response(self, response):
         self.__response = response
 
+# Authorization requests
+
     def handle_response_to_login_request(self):
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
@@ -21,87 +23,53 @@ class Handler(object):
         terminal.show_error_message("Failed to connect!")
         return False
 
-    def handle_response_to_entity_name_request(self):
+# Common entities requests
+
+    def handle_response_to_entity_base_info_request(self):
         response_json = self.__response.json()
+        info = {"name": None,
+                "parent_id": None,
+                "tree_path": None,
+                "tree_id": None}
+
         if response_json and isinstance(response_json, dict):
             name = response_json.get("name")
-            if name:
-                return name
-        terminal.show_error_message("Failed to get entity name!")
-        return None
+            info["name"] = name
 
-    def handle_response_to_entity_parent_id_request(self):
-        response_json = self.__response.json()
-        if response_json and isinstance(response_json, dict):
             links = response_json.get("links")
-            if links:
-                if isinstance(links, list):
-                    if len(links) > 0 and isinstance(links[0], dict):
-                        path = links[0].get("path")
-                        if isinstance(path, list):
-                            if len(path) > 1:
-                                parent = path[-2]
-                                if isinstance(parent, dict):
-                                    parent_id = parent.get("objectId")
-                                    return parent_id
-            else:
-                path = response_json.get("path")
-                if path:
-                    if isinstance(path, list):
+            if links and isinstance(links, list):
+                if len(links) > 0 and isinstance(links[0], dict):
+                    path = links[0].get("path")
+                    if path and isinstance(path, list):
+                        if len(path) > 0:
+                            this = path[-1]
+                            if this and isinstance(this, dict):
+                                this_tree_id = this.get("id")
+                                info["tree_id"] = this_tree_id
                         if len(path) > 1:
                             parent = path[-2]
-                            if isinstance(parent, dict):
+                            if parent and isinstance(parent, dict):
                                 parent_id = parent.get("objectId")
-                                return parent_id
+                                info["parent_id"] = parent_id
+                    path_names = links[0].get("pathNames")
+                    info["tree_path"] = path_names
+            else:
+                path = response_json.get("path")
+                if path and isinstance(path, list):
+                    if len(path) > 1:
+                        parent = path[-2]
+                        if parent and isinstance(parent, dict):
+                            parent_id = parent.get("objectId")
+                            info["parent_id"] = parent_id
                 else:
                     parent_id = response_json.get("parentId")
-                    if parent_id:
-                        return parent_id
-        terminal.show_error_message("There were some errors during reading entity parent id.")
-        return None
-
-    def handle_response_to_entity_tree_id_request(self):
-        response_json = self.__response.json()
-        if response_json and isinstance(response_json, dict):
-            links = response_json.get("links")
-            if links:
-                if isinstance(links, list):
-                    if len(links) > 0 and isinstance(links[0], dict):
-                        path = links[0].get("path")
-                        if isinstance(path, list):
-                            if len(path) > 1:
-                                this = path[-1]
-                                if isinstance(this, dict):
-                                    this_tree_id = this.get("id")
-                                    return this_tree_id
-        terminal.show_error_message("There were some errors during reading entity tree id.")
-        return None
-
-    def handle_response_to_entity_tree_path_request(self):
-        response_json = self.__response.json()
-        if response_json and isinstance(response_json, dict):
-            links = response_json.get("links")
-            if links:
-                if isinstance(links, list):
-                    if len(links) > 0 and isinstance(links[0], dict):
-                        path_names = links[0].get("pathNames")
-                        if path_names:
-                            return path_names
-            else:
+                    info["parent_id"] = parent_id
                 path_names = response_json.get("pathNames")
-                if path_names:
-                    return path_names
-        terminal.show_error_message("There were some errors during reading entity tree path.")
-        return None
+                info["tree_path"] = path_names
 
-    def handle_response_to_clone_simulation_request(self):
-        response_json = self.__response.json()
-        if response_json and isinstance(response_json, dict):
-            simulation_id = response_json.get("id")
-            if simulation_id:
-                return simulation_id
-        terminal.show_error_message("Failed to clone simulation.")
-        return None
+        return info
+
+# Loadcase requests
 
     def handle_response_to_loadcase_simulations_request(self):
         response_json = self.__response.json()
@@ -120,13 +88,15 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading loadcase simulations!")
         return None
 
-    def handle_response_to_task_status_response(self):
+# Simulation requests
+
+    def handle_response_to_clone_simulation_request(self):
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
-            task_status = response_json.get("status")
-            if task_status:
-                return task_status
-        terminal.show_error_message("Failed to get task status.")
+            simulation_id = response_json.get("id")
+            if simulation_id:
+                return simulation_id
+        terminal.show_error_message("Failed to clone simulation.")
         return None
 
     def handle_response_to_simulation_tasks_request(self):
@@ -159,6 +129,19 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation submodels!")
         return None
 
+# Task requests
+
+    def handle_response_to_task_status_response(self):
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            task_status = response_json.get("status")
+            if task_status:
+                return task_status
+        terminal.show_error_message("Failed to get task status.")
+        return None
+
+# Submodel requests
+
     def handle_response_to_upload_submodel_request(self):
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
@@ -166,10 +149,24 @@ class Handler(object):
             if status == "success":
                 submodels = response_json.get("set")
                 if submodels and isinstance(submodels, list):
-                    if len(submodels) > 1:
+                    if len(submodels) > 0:
                         if isinstance(submodels[0], dict):
                             submodel_id = submodels[0].get("id")
                             return submodel_id
         terminal.show_error_message("There were some errors during uploading new submodel!")
         return None
 
+    def handle_response_to_stype_submodels_requests(self):
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            list_of_submodels = []
+            content = response_json.get("content")
+            if content and isinstance(content, list):
+                for item in content:
+                    if item and isinstance(item, dict):
+                        submodel_id = item.get("id")
+                        if submodel_id:
+                            list_of_submodels.append(submodel_id)
+                return list_of_submodels
+        terminal.show_error_message("There were some errors during reading s|type submodels!")
+        return None

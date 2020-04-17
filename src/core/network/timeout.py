@@ -4,7 +4,7 @@ import time
 
 class Timeout(object):
 
-    INTERVAL = 0.050  # 50 ms
+    INTERVAL = 0.270  # 270 ms
 
     @staticmethod
     def hold_your_horses():

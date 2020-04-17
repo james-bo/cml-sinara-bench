@@ -26,6 +26,7 @@ class AbstractEntity(object):
         self._name = None
         self._parent_id = None
         self._tree_path = None
+        self._tree_id = None
 
     def __repr__(self):
         return "Entity type: {} | Entity ID: {}".format(self.entity_type, self.identifier)
@@ -50,15 +51,24 @@ class AbstractEntity(object):
     def tree_path(self):
         return self._tree_path
 
+    @property
+    def tree_id(self):
+        return self._tree_id
+
     def _set_entity_type(self, entity_type):
         if isinstance(entity_type, EntityTypes):
             self._entity_type = entity_type
 
     def _setup_attributes(self):
         if self.entity_type:
-            self._setup_name()
-            self._setup_parent_id()
-            self._setup_tree_path()
+            response = self._sender.send_entity_base_info_request(self.identifier, self.entity_type.value)
+            Timeout.hold_your_horses()
+            self._handler.set_response(response)
+            base_info = self._handler.handle_response_to_entity_base_info_request()
+            self._name = base_info.get("name")
+            self._parent_id = base_info.get("parent_id")
+            self._tree_path = base_info.get("tree_path")
+            self._tree_id = base_info.get("tree_id")
 
     def _setup_name(self):
         response = self._sender.send_entity_name_request(self.identifier, self.entity_type.value)
@@ -160,18 +170,8 @@ class Simulation(AbstractEntity):
         return None
 
     def add_new_sumbodels(self, *files, **params):
-        if "stype" in params.keys():
-            stype = SubmodelType(self._app_session, params.get("stype"))
-        else:
-            stype = SubmodelType(self._app_session, self._app_session.cfg.server_storage)
-
-        if "add_to_clipboard" in params.keys():
-            add_to_clipboard = "on" if bool(params.get("add_to_clipboard")) else "off"
-        else:
-            add_to_clipboard = "off"
-
-
-        return 0
+        # TODO Implement method
+        return NotImplemented
 
 
 class Task(AbstractEntity):
@@ -199,11 +199,39 @@ class SubmodelType(AbstractEntity):
         self._set_entity_type(EntityTypes.STYPE)
         self._setup_attributes()
 
-    def get_tree_id(self):
-        response = self._sender.send_entity_tree_id_request(self.identifier, self.entity_type)
+    def get_list_of_submodels(self):
+        response = self._sender.send_stype_submodels_request(self.tree_path)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
-        return self._handler.handle_response_to_entity_tree_id_request()
+        stype_submodels_list = self._handler.handle_response_to_stype_submodels_requests()
+        if stype_submodels_list:
+            submodels = []
+            for submodel_id in stype_submodels_list:
+                submodels.append(Submodel(self._app_session, submodel_id))
+            return submodels
+        return None
+
+    def upload_new_submodel(self, *files, **params):
+        if "stype" in params.keys():
+            stype = SubmodelType(self._app_session, params.get("stype"))
+        else:
+            stype = SubmodelType(self._app_session, self._app_session.cfg.server_storage)
+
+        if "add_to_clipboard" in params.keys():
+            add_to_clipboard = "on" if bool(params.get("add_to_clipboard")) else "off"
+        else:
+            add_to_clipboard = "off"
+
+        submodels = []
+        for file in files:
+            response = self._sender.send_upload_submodel_request(file, stype.tree_id, add_to_clipboard)
+            Timeout.hold_your_horses()
+            self._handler.set_response(response)
+            sumbodel_id = self._handler.handle_response_to_upload_submodel_request()
+            if sumbodel_id:
+                submodels.append(Submodel(self._app_session, sumbodel_id))
+
+        return submodels
 
 
 class Submodel(AbstractEntity):
