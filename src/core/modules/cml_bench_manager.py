@@ -67,3 +67,12 @@ class CMLBenchManager(object):
         uploaded_submodels = stype.upload_new_submodel(*local_paths)
         terminal.show_info_message("List of uploaded submodels: {}".format(str(uploaded_submodels)))
         return uploaded_submodels
+
+    def add_new_submodels_to_simulation(self):
+        terminal.show_info_message("Trying to add new sumbodels to simulation {}".format(self.search_id))
+        uploaded_submodels = self.upload_submodels_to_server_storage()
+        uploaded_submodels_ids = [submodel.identifier for submodel in uploaded_submodels]
+        simulation = self.search_for_simulation()
+        simulation_submodels = simulation.add_new_sumbodels(uploaded_submodels_ids)
+        terminal.show_info_message("List of simulation submodels: {}".format(str(simulation_submodels)))
+        return simulation_submodels

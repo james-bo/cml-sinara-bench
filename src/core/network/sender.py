@@ -59,6 +59,13 @@ class Sender(object):
         response = self.__http_session.get(url)
         return response
 
+    def send_simulation_submodels_update_request(self, entity_id, sumbodels):
+        url = "{}/rest/simulation/{}/submodel".format(self.__host, entity_id)
+        # FIXME `data` takes a dictionary. How to send list without any keys?
+        response = self.__http_session.post(url,
+                                            json=[*sumbodels])
+        return response
+
 # Task requests
 
     def send_task_status_request(self, entity_id):

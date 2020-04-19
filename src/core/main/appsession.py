@@ -51,12 +51,14 @@ class AppSession(object):
             status = authorization.cml_bench_sign_in()
 
             if status:
-                search_id = 686462  # 683992
+                search_id = 687128  # 683992
                 cml_bench_manager = CMLBenchManager(self, search_id)
-                cml_bench_manager.get_list_of_submodels_to_be_uploaded()
-                cml_bench_manager.get_list_of_existing_simulation_sumbodels()
-                cml_bench_manager.get_list_of_existing_server_storage_submodels()
-                cml_bench_manager.upload_submodels_to_server_storage()
+                # Ways of usage:
+                # cml_bench_manager.get_list_of_submodels_to_be_uploaded()
+                # cml_bench_manager.get_list_of_existing_simulation_sumbodels()
+                # cml_bench_manager.get_list_of_existing_server_storage_submodels()
+                # cml_bench_manager.upload_submodels_to_server_storage()
+                cml_bench_manager.add_new_submodels_to_simulation()
 
         except Exception as e:
             import traceback

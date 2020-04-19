@@ -70,24 +70,6 @@ class AbstractEntity(object):
             self._tree_path = base_info.get("tree_path")
             self._tree_id = base_info.get("tree_id")
 
-    def _setup_name(self):
-        response = self._sender.send_entity_name_request(self.identifier, self.entity_type.value)
-        Timeout.hold_your_horses()
-        self._handler.set_response(response)
-        self._name = self._handler.handle_response_to_entity_name_request()
-
-    def _setup_parent_id(self):
-        response = self._sender.send_entity_parent_id_request(self.identifier, self.entity_type.value)
-        Timeout.hold_your_horses()
-        self._handler.set_response(response)
-        self._parent_id = self._handler.handle_response_to_entity_parent_id_request()
-
-    def _setup_tree_path(self):
-        response = self._sender.send_entity_tree_path_request(self.identifier, self.entity_type.value)
-        Timeout.hold_your_horses()
-        self._handler.set_response(response)
-        self._tree_path = self._handler.handle_response_to_entity_tree_path_request()
-
 
 class Loadcase(AbstractEntity):
     """
@@ -169,9 +151,27 @@ class Simulation(AbstractEntity):
             return submodels
         return None
 
-    def add_new_sumbodels(self, *files, **params):
-        # TODO Implement method
-        return NotImplemented
+    def add_new_sumbodels(self, new_submodel_ids):
+        # First, get list of current submodels
+        response = self._sender.send_simulation_submodels_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        simulation_submodels_list = self._handler.handle_response_to_simulation_submodels_request()
+        if not simulation_submodels_list:
+            simulation_submodels_list = []
+        # Append new submodel to the list of existing submodels
+        simulation_submodels_list.extend(new_submodel_ids)
+        # Send request to update simulation submodels (that's how it works in CML-Bench)
+        response = self._sender.send_simulation_submodels_update_request(self.identifier, simulation_submodels_list)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        simulation_submodels_list = self._handler.handle_response_to_simulation_submodels_request()
+        if simulation_submodels_list:
+            submodels = []
+            for submodel_id in simulation_submodels_list:
+                submodels.append(Submodel(self._app_session, submodel_id))
+            return submodels
+        return None
 
 
 class Task(AbstractEntity):
