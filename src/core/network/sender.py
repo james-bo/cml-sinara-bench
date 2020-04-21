@@ -61,9 +61,23 @@ class Sender(object):
 
     def send_simulation_submodels_update_request(self, entity_id, sumbodels):
         url = "{}/rest/simulation/{}/submodel".format(self.__host, entity_id)
-        # FIXME `data` takes a dictionary. How to send list without any keys?
         response = self.__http_session.post(url,
                                             json=[*sumbodels])
+        return response
+
+    def send_simulation_files_request(self, entity_id, max_number=100):
+        url = "{}/rest/simulation/{}/file/list".format(self.__host, entity_id)
+        response = self.__http_session.post(url,
+                                            json={"filters": {"list": [{"name": "path",
+                                                                        "value": "Bench"}]},
+                                                  "sort": [],
+                                                  "pageable": {"size": max_number,
+                                                               "page": 1}})
+        return response
+
+    def send_download_file_request(self, entity_id, file_id):
+        url = "{}/rest/simulation/{}/file/{}/export?_".format(self.__host, entity_id, file_id)
+        response = self.__http_session.get(url)
         return response
 
 # Task requests

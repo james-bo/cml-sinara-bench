@@ -76,3 +76,26 @@ class CMLBenchManager(object):
         simulation_submodels = simulation.add_new_sumbodels(uploaded_submodels_ids)
         terminal.show_info_message("List of simulation submodels: {}".format(str(simulation_submodels)))
         return simulation_submodels
+
+    def get_list_of_simulation_files(self):
+        terminal.show_info_message("Trying to get list of existing results of simulation with ID {}".format(
+            self.search_id))
+        simulation = self.search_for_simulation()
+        if simulation and isinstance(simulation, core.bench.entities.Simulation):
+            list_of_files = simulation.get_list_of_files()
+            terminal.show_info_message("List of simulation's files' id: {}".format(str(list_of_files)))
+            return list_of_files
+        return None
+
+    def download_simulation_files_to_local_storage(self):
+        terminal.show_info_message(
+            "Trying to download files to local storage: \"{}\"".format(self.app_session.cfg.local_storage))
+        simulation = self.search_for_simulation()
+        if simulation and isinstance(simulation, core.bench.entities.Simulation):
+            list_of_files_to_be_downloaded = simulation.get_list_of_files()
+            terminal.show_info_message(
+                "List of files to be downloaded: {}".format([item['name'] for item in list_of_files_to_be_downloaded]))
+            list_of_downloaded_files = simulation.download_files(list_of_files_to_be_downloaded)
+            terminal.show_info_message(
+                "List of downloaded files: {}".format([item['name'] for item in list_of_downloaded_files]))
+        return None

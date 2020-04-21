@@ -12,7 +12,7 @@ def main():
     root_path = os.path.abspath(
                     os.path.dirname(
                         inspect.getsourcefile(lambda: 0)))
-    print("Running script from: ", root_path)
+    terminal.show_info_message("Root directory: {}".format(root_path))
 
     config_path = os.path.abspath(os.path.join(root_path, "cfg", "config.cfg"))
     config_info = ConfigurationInformation(config_path)

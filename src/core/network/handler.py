@@ -129,7 +129,33 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation submodels!")
         return None
 
-# Task requests
+    def handle_response_to_simulation_files_request(self):
+        """
+        Method for getting list of simulation files
+        :return: list of dicts representing simulation files {id: 12, name: "file.txt"}
+        """
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            list_of_files = []
+            content = response_json.get("content")
+            if content and isinstance(content, list):
+                for item in content:
+                    if item and isinstance(item, dict):
+                        file_id = item.get("id")
+                        file_name = item.get("name")
+                        if file_id and file_name:
+                            list_of_files.append({"id": file_id, "name": file_name})
+                return list_of_files
+        terminal.show_error_message("There were some errors during reading simulation files!")
+        return None
+
+    def handle_response_to_download_file_request(self):
+        response = self.__response
+        if response.status_code == 200:
+            return response.content
+        return None
+
+    # Task requests
 
     def handle_response_to_task_status_response(self):
         response_json = self.__response.json()

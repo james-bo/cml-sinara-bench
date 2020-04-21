@@ -126,7 +126,7 @@ class Simulation(AbstractEntity):
     def get_list_of_tasks(self):
         """
         Method for getting a list of tasks, belonging to the simulation
-        :return: list of task objects, of None if some error occurred during reading tasks
+        :return: list of task objects, or None if some error occurred during reading tasks
         """
         response = self._sender.send_simulation_tasks_request(self.identifier)
         Timeout.hold_your_horses()
@@ -140,6 +140,10 @@ class Simulation(AbstractEntity):
         return None
 
     def get_list_of_submodels(self):
+        """
+        Method for getting a list of submodels, belonging to the simulation
+        :return: list of submodels, or None if some error occurred during reading submodels
+        """
         response = self._sender.send_simulation_submodels_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -150,6 +154,30 @@ class Simulation(AbstractEntity):
                 submodels.append(Submodel(self._app_session, submodel_id))
             return submodels
         return None
+
+    def get_list_of_files(self):
+        response = self._sender.send_simulation_files_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        simulation_files_list_of_dicts = self._handler.handle_response_to_simulation_files_request()
+        return simulation_files_list_of_dicts
+
+    def download_files(self, files):
+        """
+        Method for donwloading files which belong to the simulation
+        :return: list of dicts representing successfully downloaded files {id: 12, name: "file.txt"}
+        """
+        list_of_downloaded_files = []
+        for file in files:
+            response = self._sender.send_download_file_request(self.identifier, file["id"])
+            Timeout.hold_your_horses()
+            self._handler.set_response(response)
+            file_content = self._handler.handle_response_to_download_file_request()
+            if file_content and isinstance(file_content, bytes):
+                with open(self._app_session.cfg.local_storage + "\\" + file["name"], mode="wb") as f:
+                    f.write(file_content)
+                list_of_downloaded_files.append(file)
+        return list_of_downloaded_files
 
     def add_new_sumbodels(self, new_submodel_ids):
         # First, get list of current submodels

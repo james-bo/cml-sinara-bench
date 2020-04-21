@@ -59,6 +59,8 @@ class AppSession(object):
                 # cml_bench_manager.get_list_of_existing_server_storage_submodels()
                 # cml_bench_manager.upload_submodels_to_server_storage()
                 cml_bench_manager.add_new_submodels_to_simulation()
+                cml_bench_manager.get_list_of_simulation_files()
+                cml_bench_manager.download_simulation_files_to_local_storage()
 
         except Exception as e:
             import traceback
