@@ -1,9 +1,46 @@
 # coding: utf-8
 import win32com.client
+import json
 from ui.console import terminal
 
 
+class JSONDataManager(object):
+    """
+    Getting information form JSON input file
+    """
+    def __init__(self, app_session):
+        self.__app_session = app_session
+        self.__json = self.__app_session.cfg.json
+        self.__local_storage = self.__app_session.cfg.local_storage
+        self.__server_storage = self.__app_session.cfg.server_storage
+
+    def get_json_data(self):
+        """
+        Method returns a dictionary containing structured input data information
+        {object_id: {object}}
+        :return: dictionary if success or None otherwise
+        """
+        res = {}
+        with open(self.__json, mode='r') as jf:
+            data = json.load(jf)
+        root = data.get("Root")
+        if root:
+            lcs = root.get("LCs")
+            if lcs:
+                assert isinstance(lcs, list)
+                for item in lcs:
+                    assert isinstance(item, dict)
+                    key = item.get("object_id")
+                    val = item
+                    res[key] = val
+                return res
+        return None
+
+
 class LocalDataManager(object):
+    """
+    OBSOLETE
+    """
     def __init__(self, app_session):
         self.__app_session = app_session
         self.__database = self.__app_session.cfg.database

@@ -149,10 +149,35 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation files!")
         return None
 
+    def handle_response_to_task_defaults_request(self):
+        response = self.__response
+        response_json_list = response.json()
+        if isinstance(response_json_list, list) and response_json_list:
+            defaults_json = response_json_list[0]
+            if defaults_json and isinstance(defaults_json, dict):
+                return defaults_json
+        if response.status_code == 200 and not response_json_list:
+            terminal.show_error_message("Simulation defaults for task were not found!")
+            return None
+        terminal.show_error_message("There were some errors during reading task defaults of this simulation!")
+        return None
+
     def handle_response_to_download_file_request(self):
         response = self.__response
         if response.status_code == 200:
             return response.content
+        return None
+
+    def handle_response_to_run_request(self):
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict) and ("id" in response_json):
+            task_identifier = response_json.get("id")
+            return task_identifier
+        if response_json and isinstance(response_json, dict) and ("message" in response_json):
+            message = response_json.get("message")
+            terminal.show_error_message("Couldn't send simulation to run: \"{}!\"".format(message))
+            return None
+        terminal.show_error_message("There were some errors during sending simulation to run!")
         return None
 
     # Task requests

@@ -1,4 +1,5 @@
 # coding: utf-8
+from ui.console import terminal
 
 
 class Sender(object):
@@ -20,7 +21,7 @@ class Sender(object):
 
     def send_entity_base_info_request(self, entity_id, entity_type):
         url = "{}/rest/{}/{}".format(self.__host, entity_type, entity_id)
-        print("GET     > " + url)
+        terminal.show_get_request(url)
         response = self.__http_session.get(url)
         return response
 
@@ -75,9 +76,19 @@ class Sender(object):
                                                                "page": 1}})
         return response
 
+    def send_task_defaults_request(self, entity_id):
+        url = "{}/rest/simulation/{}/task/".format(self.__host, entity_id)
+        response = self.__http_session.get(url)
+        return response
+
     def send_download_file_request(self, entity_id, file_id):
         url = "{}/rest/simulation/{}/file/{}/export?_".format(self.__host, entity_id, file_id)
         response = self.__http_session.get(url)
+        return response
+
+    def send_run_request(self, **parameters):
+        url = "{}/rest/task/".format(self.__host)
+        response = self.__http_session.post(url, json=parameters)
         return response
 
 # Task requests

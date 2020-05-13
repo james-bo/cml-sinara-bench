@@ -1,8 +1,10 @@
 # CML Sinara Bench
 
-program version 0.1
+Program version: 0.2
 
-Python 3.7
+Date: 13/05/2020
+
+Language version: Python 3.7
 
 Current usage:
 * `python sinara.py`

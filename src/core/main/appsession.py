@@ -4,6 +4,7 @@ from core.network.sender import Sender
 from core.network.handler import Handler
 from core.modules.authorization import Authorization
 from core.modules.cml_bench_manager import CMLBenchManager
+from core.modules.workflow import WorkFlow
 
 
 class AppSession(object):
@@ -51,17 +52,7 @@ class AppSession(object):
             status = authorization.cml_bench_sign_in()
 
             if status:
-                search_id = 687128  # 683992
-                cml_bench_manager = CMLBenchManager(self, search_id)
-                # Ways of usage:
-                # cml_bench_manager.get_list_of_submodels_to_be_uploaded()
-                # cml_bench_manager.get_list_of_existing_simulation_sumbodels()
-                # cml_bench_manager.get_list_of_existing_server_storage_submodels()
-                # cml_bench_manager.upload_submodels_to_server_storage()
-                cml_bench_manager.add_new_submodels_to_simulation()
-                cml_bench_manager.get_list_of_simulation_files()
-                cml_bench_manager.download_simulation_files_to_local_storage()
-
+                workflow = WorkFlow(self)
         except Exception as e:
             import traceback
             print(e)

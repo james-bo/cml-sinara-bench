@@ -17,12 +17,20 @@ def request_hidden_input(message=None):
 
 
 def show_info_message(message):
-    print("INFO    : " + message)
+    print("*** INFO     ***\n" + message)
 
 
 def show_warning_message(message):
-    print("WARNING : " + message)
+    print("*** WARNING  ***\n" + message)
 
 
 def show_error_message(message):
-    print("ERROR   : " + message)
+    print("*** ERROR    ***\n" + message)
+
+
+def show_get_request(url):
+    print("GET     > " + url)
+
+
+def show_post_request(url):
+    print("POST    > " + url)

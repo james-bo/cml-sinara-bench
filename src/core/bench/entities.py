@@ -1,6 +1,7 @@
 # coding: utf-8
 import enum
 from core.network.timeout import Timeout
+from ui.console import terminal
 
 
 class EntityTypes(enum.Enum):
@@ -199,6 +200,58 @@ class Simulation(AbstractEntity):
             for submodel_id in simulation_submodels_list:
                 submodels.append(Submodel(self._app_session, submodel_id))
             return submodels
+        return None
+
+    def get_simulation_task_defaults(self):
+        """
+        Method for obtaining default paremeters for run/post-processing task
+        :return:
+        """
+        response = self._sender.send_task_defaults_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        task_startup_defaults = self._handler.handle_response_to_task_defaults_request()
+        return task_startup_defaults
+
+    def run(self, **parameters):
+        """
+        Run or post-process current simulation
+        :param parameters: keywords for identify run or post-processor commands
+                           "exec" - type of solver or post-processor to be run
+                           "stb" - storyboard id for "exec = VBA"
+        :return: ID of created Task or None if error occurred
+        """
+        params = {}
+        if "exec" in parameters.keys():
+            executable = parameters.get("exec")
+            if executable == "Nastran 2017":
+                params = {
+                          "parentType": {"name": "simulation"},
+                          "solverName": "Nastran 2017",
+                          "solvingType": "Solving",
+                          "parentId": self.identifier
+                         }
+            if executable == "VBA":
+                if "stb" in parameters.keys():
+                    storyboard_id = parameters.get("stb")
+                    params = {
+                              "parentType": {"name": "simulation"},
+                              "postprocessorName": "Microsoft Office Postprocessing",
+                              "type": "postprocessing",
+                              "parentId": self.identifier,
+                              "storyboardId": storyboard_id
+                             }
+                else:
+                    terminal.show_error_message("No storyboard selected. Cannot execute post-processor")
+        else:
+            params = self.get_simulation_task_defaults()
+
+        response = self._sender.send_run_request(**params)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        task_id = self._handler.handle_response_to_run_request()
+        if task_id:
+            return Task(self._app_session, task_id)
         return None
 
 

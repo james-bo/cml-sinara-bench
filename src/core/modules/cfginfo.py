@@ -19,6 +19,8 @@ class ConfigurationInformationStatus(enum.Enum):
                               "description": "Configuration file does not contain information about local storage"}
     NO_SERVER_STORAGE_ERROR = {"code": 4,
                                "description": "Configuration file does not contain information about server storage"}
+    NO_JSON_ERROR = {"code": 5,
+                     "description": "Configuration file does not contain information about JSON file with input data"}
 
 
 class ConfigurationInformation(object):
@@ -32,6 +34,7 @@ class ConfigurationInformation(object):
             self.__file_exists = False
         self.__necessary_keys = ["backend address",
                                  "database",
+                                 "json",
                                  "local storage",
                                  "server storage"]
 
@@ -48,12 +51,16 @@ class ConfigurationInformation(object):
         return self.__info.get(self.__necessary_keys[1])
 
     @property
-    def local_storage(self):
+    def json(self):
         return self.__info.get(self.__necessary_keys[2])
 
     @property
-    def server_storage(self):
+    def local_storage(self):
         return self.__info.get(self.__necessary_keys[3])
+
+    @property
+    def server_storage(self):
+        return self.__info.get(self.__necessary_keys[4])
 
     @property
     def status_code(self):
@@ -73,7 +80,9 @@ class ConfigurationInformation(object):
         if self.__necessary_keys[1] not in self.__info.keys():
             return ConfigurationInformationStatus.NO_DATABASE_ERROR
         if self.__necessary_keys[2] not in self.__info.keys():
+            return ConfigurationInformationStatus.NO_JSON_ERROR
+        if self.__necessary_keys[3] not in self.__info.keys():
             return ConfigurationInformationStatus.NO_LOCAL_STORAGE_ERROR
-        if self.__necessary_keys[3] not in  self.__info.keys():
+        if self.__necessary_keys[4] not in self.__info.keys():
             return ConfigurationInformationStatus.NO_SERVER_STORAGE_ERROR
         return ConfigurationInformationStatus.SUCCESS

@@ -5,6 +5,11 @@ from core.dao.local_data_manager import LocalDataManager
 
 
 class CMLBenchManager(object):
+    """
+    Deprecated
+    Only for tests
+    Actual application logic in workflow.py
+    """
     def __init__(self, app_session, search_id):
         self.__app_session = app_session
         self.__search_id = search_id
