@@ -2,6 +2,7 @@
 import core.bench.entities
 from ui.console import terminal
 from core.dao.local_data_manager import JSONDataManager
+from core.network.timeout import Timeout
 
 
 class Vertex(object):
@@ -60,6 +61,9 @@ class Vertex(object):
         # List of parent vertices (objects)
         self.__links = []
 
+        # S|Type to upload submodels
+        self.__stype = core.bench.entities.SubmodelType(self.app_session, self.app_session.cfg.server_storage)
+
     @property
     def app_session(self):
         return self.__app_session
@@ -88,9 +92,35 @@ class Vertex(object):
         return self.__current_simulation
 
     @current_simulation.setter
-    def current_simulation(self, current_simulation_id):
-        self.__current_simulation = core.bench.entities.Simulation(self.app_session, current_simulation_id)
-        self.__bench_id = current_simulation_id
+    def current_simulation(self, current_simulation):
+        self.__current_simulation = current_simulation
+        self.__bench_id = current_simulation.identifier
+
+    @property
+    def current_task(self):
+        return self.__current_task
+
+    @current_task.setter
+    def current_task(self, current_task):
+        self.__current_task = current_task
+        self.__task_status = current_task.get_status
+
+    @property
+    def status(self):
+        return self.__task_status
+
+    @status.setter
+    def status(self, status):
+        if status == self.__current_task.get_status():
+            self.__task_status = status
+
+    @property
+    def submodels(self):
+        return [self.app_session.cfg.local_storage + "/" + f for f in self.__submodels]
+
+    @property
+    def stype(self):
+        return self.__stype
 
     def __repr__(self):
         self_id = self.object_id
@@ -162,6 +192,8 @@ class Graph(object):
 
 class WorkFlow(object):
 
+    WALK_INTERVAL = 60  # 1 minute
+
     __instance = None
 
     @classmethod
@@ -200,10 +232,124 @@ class WorkFlow(object):
     def app_session(self):
         return self.__app_session
 
+    @property
+    def graph(self):
+        return self.__graph
+
     def execute_all_tasks(self):
-        pass
-        # loop while status not ok or not failed
-        # for every vertex
-        # clone simulation
-        # run cloned simulation
-        # if task status not ok - fail with error
+        """
+        Main method of workflow. Run all simulations in graph vertices.
+        :return:
+        """
+
+        def status_based_behaviour(vertex):
+            """
+            Define main loop behaviour while walking through vertex basing on vertex status
+            :param vertex: vertex in workflow graph
+            :return terminate_loop: magic integer value:
+                                    -1: error occurred and main loop shall be stopped
+                                     0: current simulation is not done yet, continue
+                                     1: current simulation is done
+            """
+            assert isinstance(vertex, Vertex)
+            terminal.show_info_message("Processing vertex with ID: {}".format(vertex.object_id))
+            # if status is "New",
+            #   - clone base simulation
+            #   - upload submodels
+            #   - run cloned (current vertex) simulation
+            #   - update vertex status from simulation task status
+            if vertex.status == "New":
+                terminal.show_info_message("Vertex status: {}".format(vertex.status))
+                terminal.show_info_message("Vertex base simulation ID: {}".format(vertex.base_simulation.identifier))
+                base_simulation = vertex.base_simulation
+                terminal.show_info_message("Trying to clone base simulation...")
+                current_simulation = base_simulation.clone()
+                vertex.current_simulation = current_simulation
+                if current_simulation:
+                    # if cloned successfully, upload submodels
+                    terminal.show_info_message("Cloned simulation ID: {}".format(vertex.current_simulation.identifier))
+                    terminal.show_info_message("Uploading submodels for current simulation...")
+                    stype = vertex.stype
+                    uploaded_submodels = stype.upload_new_submodel(*vertex.submodels)
+                    uploaded_submodels_ids = [submodel.identifier for submodel in uploaded_submodels]
+                    _ = current_simulation.add_new_sumbodels(uploaded_submodels_ids)
+                    terminal.show_info_message("{} submodels added for current simulations".format(
+                        len(uploaded_submodels_ids)))
+                    # start with default parameters
+                    terminal.show_info_message("Trying to run current simulation...")
+                    current_task = current_simulation.run()
+                    vertex.current_task = current_task
+                    if current_task:
+                        # if task created successfully, get status
+                        terminal.show_info_message("Created task ID: {}".format(vertex.current_task.identifier))
+                        vertex.status = current_task.get_status()
+                        return 0
+                    terminal.show_error_message("Task has not been created.")
+                    return -1
+                terminal.show_error_message("Simulation has not been cloned.")
+                return -1
+            # if status is "Finished",
+            #   - nothing to do with vertex
+            #   - save status; when all vertices will have the same status, loop can be stopped
+            elif vertex.status == "Finished":
+                terminal.show_info_message("Vertex status: {}".format(vertex.status))
+                return 1
+            # if status is "Failed",
+            #   - terminate main loop
+            elif vertex.status == "Failed":
+                terminal.show_warning_message("Vertex status: {}".format(vertex.status))
+                return -1
+            # if status is unknown,
+            #   - update vertex status from simulation task status
+            else:
+                terminal.show_info_message("Updating vertex status...")
+                current_task = vertex.current_task
+                if current_task:
+                    current_status = current_task.get_status()
+                    vertex.status = current_status
+                terminal.show_info_message("Vertex status: {}".format(vertex.status))
+                return 0
+
+        stop_main_loop = False
+
+        # initiate list for saving loop results
+        rs = [0 for _ in range(len(self.graph.vertices))]
+
+        # main loop - while all tasks are done or some failure occurred
+        while not stop_main_loop:
+
+            # iterate over dictionary of all workflow graph vertices {id -> Vertex}
+            for i, v in enumerate(self.graph.vertices.values()):
+
+                # check vertex links
+                # if links list is empty, vertex is at root level and it's simulation can be started
+                if len(v.links == 0):
+                    terminal.show_info_message("Vertex {} has no linked vertices".format(v.object_id))
+                    r = status_based_behaviour(v)
+                    rs[i] = r
+                    if r == -1:
+                        terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
+                        stop_main_loop = True
+                        break
+
+                # else, if links list is not empty,
+                else:
+                    terminal.show_info_message("Vertex {} has {} linked vertices".format(v.object_id, len(v.links)))
+                    terminal.show_info_message("Checking status of linked vertices...")
+                    # check status of all linked vertices
+                    if all(l.status == "Finished" for l in v.links):
+                        # if all parent vertices successfully finished,
+                        # current vertex can run
+                        terminal.show_info_message("All linked vertices successfully finished")
+                        r = status_based_behaviour(v)
+                        rs[i] = r
+                        if r == -1:
+                            terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
+                            stop_main_loop = True
+                            break
+                    else:
+                        terminal.show_info_message("Some linked vertices is not finished yet...")
+
+            stop_main_loop = all(item == 1 for item in rs) or any(item == -1 for item in rs)
+            if not stop_main_loop:
+                Timeout.pause(WorkFlow.WALK_INTERVAL)

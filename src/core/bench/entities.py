@@ -110,12 +110,15 @@ class Simulation(AbstractEntity):
     def clone(self):
         """
         Method for creating a new simulation, based on the current one
-        :return: id of the new simulation, or None if failed to clone simulation
+        :return: cloned simulation object, or None if failed to clone simulation
         """
         response = self._sender.send_clone_simulation_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
-        return self._handler.handle_response_to_clone_simulation_request()
+        cloned_simulation_id = self._handler.handle_response_to_clone_simulation_request()
+        if cloned_simulation_id:
+            return Simulation(self._app_session, cloned_simulation_id)
+        return None
 
     def get_parent_loadcase(self):
         """
@@ -293,6 +296,7 @@ class SubmodelType(AbstractEntity):
         return None
 
     def upload_new_submodel(self, *files, **params):
+        # FIXME wtf??? create instance of SubmodelType inside its method
         if "stype" in params.keys():
             stype = SubmodelType(self._app_session, params.get("stype"))
         else:

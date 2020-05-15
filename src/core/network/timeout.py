@@ -9,3 +9,7 @@ class Timeout(object):
     @staticmethod
     def hold_your_horses():
         time.sleep(Timeout.INTERVAL)
+
+    @staticmethod
+    def pause(interval):
+        time.sleep(interval)
