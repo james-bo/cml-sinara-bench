@@ -3,7 +3,6 @@ import requests
 from core.network.sender import Sender
 from core.network.handler import Handler
 from core.modules.authorization import Authorization
-from core.modules.cml_bench_manager import CMLBenchManager
 from core.modules.workflow import WorkFlow
 
 

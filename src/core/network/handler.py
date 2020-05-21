@@ -14,6 +14,10 @@ class Handler(object):
 # Authorization requests
 
     def handle_response_to_login_request(self):
+        """
+        Handles response to login request
+        :return: True if connection has been established, False otherwise
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             user = response_json.get("login")
@@ -26,6 +30,10 @@ class Handler(object):
 # Common entities requests
 
     def handle_response_to_entity_base_info_request(self):
+        """
+        Handles response to basic information about CML-Bench entity: name, parent ID, path in tree, tree ID
+        :return: dictionary with keys `name`, `parent_id`, `tree_path`, `tree_id`
+        """
         response_json = self.__response.json()
         info = {"name": None,
                 "parent_id": None,
@@ -72,6 +80,10 @@ class Handler(object):
 # Loadcase requests
 
     def handle_response_to_loadcase_simulations_request(self):
+        """
+        Handles response to loadcase simulations request
+        :return: list containing IDs of loadcase simulations, or None, if some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             list_of_simulations = []
@@ -91,6 +103,10 @@ class Handler(object):
 # Simulation requests
 
     def handle_response_to_clone_simulation_request(self):
+        """
+        Handles response to clone simulation request
+        :return: ID of cloned simulation, or None, if some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             simulation_id = response_json.get("id")
@@ -100,6 +116,10 @@ class Handler(object):
         return None
 
     def handle_response_to_simulation_tasks_request(self):
+        """
+        Handles response to simulation tasks request
+        :return: list containing IDs of simulation tasks, or None, if some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             list_of_tasks = []
@@ -117,6 +137,10 @@ class Handler(object):
         return None
 
     def handle_response_to_simulation_submodels_request(self):
+        """
+        Handles response to simulation submodels request
+        :return: list containing IDs of simulation submodels, or None, if some error occurred
+        """
         response_json = self.__response.json()
         list_of_submodels = []
         if response_json and isinstance(response_json, list):
@@ -131,8 +155,9 @@ class Handler(object):
 
     def handle_response_to_simulation_files_request(self):
         """
-        Method for getting list of simulation files
-        :return: list of dicts representing simulation files {id: 12, name: "file.txt"}
+        Handles response to simulation files request
+        :return: list of dictionaries with keys `id`, `name`, representing simulation files,
+                 or None, if some error occurred
         """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
@@ -150,6 +175,10 @@ class Handler(object):
         return None
 
     def handle_response_to_task_defaults_request(self):
+        """
+        Handles response to default task parameters request
+        :return: dictionary with request json parameters to run new task, or None, if some error occurred
+        """
         response = self.__response
         response_json_list = response.json()
         if isinstance(response_json_list, list) and response_json_list:
@@ -163,12 +192,20 @@ class Handler(object):
         return None
 
     def handle_response_to_download_file_request(self):
+        """
+        Handles response to download file requeest
+        :return: response content (binary data) or None, response status code is not 200
+        """
         response = self.__response
         if response.status_code == 200:
             return response.content
         return None
 
     def handle_response_to_run_request(self):
+        """
+        Handles response to run request
+        :return: task ID if new task was created, or None otherwise
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict) and ("id" in response_json):
             task_identifier = response_json.get("id")
@@ -180,9 +217,13 @@ class Handler(object):
         terminal.show_error_message("There were some errors during sending simulation to run!")
         return None
 
-    # Task requests
+# Task requests
 
     def handle_response_to_task_status_response(self):
+        """
+        Handles response to task status request
+        :return: current task status, or None, if some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             task_status = response_json.get("status")
@@ -194,6 +235,10 @@ class Handler(object):
 # Submodel requests
 
     def handle_response_to_upload_submodel_request(self):
+        """
+        Handles response to upload submodel request
+        :return: uploaded submodel ID, or list of duplicates IDs, or None, of some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             status = response_json.get("status")
@@ -204,10 +249,35 @@ class Handler(object):
                         if isinstance(submodels[0], dict):
                             submodel_id = submodels[0].get("id")
                             return submodel_id
+            if status == "warning":
+                duplicates = response_json.get("duplicates")
+                if duplicates and isinstance(duplicates, list):
+                    terminal.show_warning_message("There are duplicate submodels on server!")
+                    if len(duplicates) > 0:
+                        if isinstance(duplicates[0], dict):
+                            created_object = duplicates[0].get("createdObject")
+                            # Bench by default gets duplicates over all of its storage thus
+                            # getting parent id, and filtering all submodels which belong to the parent directory
+                            created_object_pid = created_object.get("pid")
+                            duplicate_objects = duplicates[0].get("duplicateObjects")
+                            if duplicate_objects and isinstance(duplicates, list):
+                                duplicates_id = []
+                                for submodel in duplicate_objects[1:]:  # duplicate_objects[0] is original submodel
+                                    submodel_pid = submodel.get("pid")
+                                    if submodel_pid == created_object_pid:
+                                        submodel_id = submodel.get("id")
+                                        duplicates_id.append(submodel_id)
+                                created_object_id = created_object.get("id")
+                                duplicates_id.append(created_object_id)
+                                return duplicates_id
         terminal.show_error_message("There were some errors during uploading new submodel!")
         return None
 
     def handle_response_to_stype_submodels_requests(self):
+        """
+        Handles response to s|type submodels request
+        :return: list of submodel IDs, containing in current s|type, or None, if some error occurred
+        """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
             list_of_submodels = []
@@ -220,4 +290,37 @@ class Handler(object):
                             list_of_submodels.append(submodel_id)
                 return list_of_submodels
         terminal.show_error_message("There were some errors during reading s|type submodels!")
+        return None
+
+    def handle_response_to_delete_submodel_from_server_request(self):
+        """
+        Handles response to delete submodel from server request
+        :return: deleted submodel ID, if successfully deleted, or None otherwise
+        """
+        response = self.__response
+
+        if response.status_code == 200:
+            response_json = self.__response.json()
+            deleted_submodel_identifier = response_json.get("id")
+            if deleted_submodel_identifier:
+                return deleted_submodel_identifier
+
+        if response.status_code == 409:
+            response_json = self.__response.json()
+            if response_json and isinstance(response_json, dict):
+                message = response_json.get("message")
+                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"".format(
+                    message))
+                return None
+
+        if response.status_code == 403:
+            response_json = self.__response.json()
+            if response_json and isinstance(response_json, dict):
+                message = response_json.get("message")
+                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"".format(
+                    message))
+                return None
+
+        # print(response)
+        terminal.show_error_message("There were some errors during deleting submodel from server!")
         return None

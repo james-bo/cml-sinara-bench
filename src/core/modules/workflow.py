@@ -32,7 +32,7 @@ class Vertex(object):
         self.__task_id = data.get("task_id")
         if self.__task_id:
             self.__current_task = core.bench.entities.Task(self.app_session, self.__task_id)
-            if self.__current_task not in self.__current_simulation.get_list_of_tasks():
+            if self.__current_task not in self.__current_simulation.get_tasks():
                 terminal.show_error_message("Defined task does not belong to defined simulation")
         else:
             self.__current_task = None
@@ -117,6 +117,10 @@ class Vertex(object):
     @property
     def submodels(self):
         return [self.app_session.cfg.local_storage + "/" + f for f in self.__submodels]
+
+    @property
+    def results(self):
+        return self.__results
 
     @property
     def stype(self):
@@ -253,6 +257,7 @@ class WorkFlow(object):
             """
             assert isinstance(vertex, Vertex)
             terminal.show_info_message("Processing vertex with ID: {}".format(vertex.object_id))
+
             # if status is "New",
             #   - clone base simulation
             #   - upload submodels
@@ -270,11 +275,11 @@ class WorkFlow(object):
                     terminal.show_info_message("Cloned simulation ID: {}".format(vertex.current_simulation.identifier))
                     terminal.show_info_message("Uploading submodels for current simulation...")
                     stype = vertex.stype
-                    uploaded_submodels = stype.upload_new_submodel(*vertex.submodels)
-                    uploaded_submodels_ids = [submodel.identifier for submodel in uploaded_submodels]
-                    _ = current_simulation.add_new_sumbodels(uploaded_submodels_ids)
+                    uploaded_submodels = stype.upload_submodel(*vertex.submodels)
+                    # uploaded_submodels_ids = [submodel.identifier for submodel in uploaded_submodels]
+                    _ = current_simulation.add_submodels(*uploaded_submodels)
                     terminal.show_info_message("{} submodels added for current simulations".format(
-                        len(uploaded_submodels_ids)))
+                        len(uploaded_submodels)))
                     # start with default parameters
                     terminal.show_info_message("Trying to run current simulation...")
                     current_task = current_simulation.run()
@@ -288,17 +293,27 @@ class WorkFlow(object):
                     return -1
                 terminal.show_error_message("Simulation has not been cloned.")
                 return -1
+
             # if status is "Finished",
-            #   - nothing to do with vertex
+            #   - download vertex results
             #   - save status; when all vertices will have the same status, loop can be stopped
             elif vertex.status == "Finished":
                 terminal.show_info_message("Vertex status: {}".format(vertex.status))
+                if len(vertex.results) == 0:
+                    terminal.show_info_message("No results selected for download")
+                else:
+                    terminal.show_info_message("Downloading results...")
+                    current_simulation = vertex.current_simulation
+                    lst = current_simulation.download_files(*vertex.results)
+                    terminal.show_info_message("Successfully downloaded {} files".format(len(lst)))
                 return 1
+
             # if status is "Failed",
             #   - terminate main loop
             elif vertex.status == "Failed":
                 terminal.show_warning_message("Vertex status: {}".format(vertex.status))
                 return -1
+
             # if status is unknown,
             #   - update vertex status from simulation task status
             else:
@@ -310,16 +325,24 @@ class WorkFlow(object):
                 terminal.show_info_message("Vertex status: {}".format(vertex.status))
                 return 0
 
+        # --- main section --- main section --- main section --- main section --- main section --- main section ---
         stop_main_loop = False
 
         # initiate list for saving loop results
         rs = [0 for _ in range(len(self.graph.vertices))]
 
+        # list of graph vertices to iterate over it with possibility to modify it
+        vertices = list(self.graph.vertices.values())
+        assert all(isinstance(v, Vertex) for v in vertices)
+
         # main loop - while all tasks are done or some failure occurred
         while not stop_main_loop:
 
+            # TODO: remove vertices with status == "Finished" from main loop
             # iterate over dictionary of all workflow graph vertices {id -> Vertex}
-            for i, v in enumerate(self.graph.vertices.values()):
+            # remove vertices wish status = "Finished"
+            for i in reversed(range(len(vertices))):
+                v = vertices[i]
 
                 # check vertex links
                 # if links list is empty, vertex is at root level and it's simulation can be started
@@ -331,11 +354,15 @@ class WorkFlow(object):
                         terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
                         stop_main_loop = True
                         break
+                    if r == 1:
+                        terminal.show_info_message("Vertex {} done".format(v.object_id))
+                        del vertices[i]
 
                 # else, if links list is not empty,
                 else:
                     terminal.show_info_message("Vertex {} has {} linked vertices".format(v.object_id, len(v.links)))
                     terminal.show_info_message("Checking status of linked vertices...")
+
                     # check status of all linked vertices
                     if all(l.status == "Finished" for l in v.links):
                         # if all parent vertices successfully finished,
@@ -347,9 +374,16 @@ class WorkFlow(object):
                             terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
                             stop_main_loop = True
                             break
+                        if r == 1:
+                            terminal.show_info_message("Vertex {} done".format(v.object_id))
+                            del vertices[i]
                     else:
                         terminal.show_info_message("Some linked vertices is not finished yet...")
 
             stop_main_loop = all(item == 1 for item in rs) or any(item == -1 for item in rs)
+
             if not stop_main_loop:
+                terminal.show_info_message("Waiting for the next loop ... [{} sec]".format(WorkFlow.WALK_INTERVAL))
                 Timeout.pause(WorkFlow.WALK_INTERVAL)
+            else:
+                terminal.show_info_message("Terminating main loop ...")

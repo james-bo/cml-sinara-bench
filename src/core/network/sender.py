@@ -117,3 +117,8 @@ class Sender(object):
                                                   "pageable": {"size": max_number,
                                                                "page": 1}})
         return response
+
+    def send_delete_submodel_from_server_request(self, entity_id):
+        url = "{}/rest/submodel/{}".format(self.__host, entity_id)
+        response = self.__http_session.delete(url)
+        return response
