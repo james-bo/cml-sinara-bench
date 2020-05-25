@@ -86,7 +86,7 @@ class Sender(object):
         response = self.__http_session.get(url)
         return response
 
-    def send_run_request(self, **parameters):
+    def send_run_request(self, parameters):
         url = "{}/rest/task/".format(self.__host)
         response = self.__http_session.post(url, json=parameters)
         return response

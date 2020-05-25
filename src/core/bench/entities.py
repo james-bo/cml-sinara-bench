@@ -233,7 +233,8 @@ class Simulation(AbstractEntity):
         Run or post-process current simulation
         :param parameters: keywords for identify run or post-processor commands
                            "exec" - type of solver or post-processor to be run
-                           "stb" - storyboard id for "exec = VBA"
+                           "stb"  - storyboard id for "exec = VBA"
+                           "bsi"  - base simulation ID
         :return: created Task or None if error occurred
         """
         params = {}
@@ -259,9 +260,13 @@ class Simulation(AbstractEntity):
                 else:
                     terminal.show_error_message("No storyboard selected. Cannot execute post-processor")
         else:
-            params = self.__get_defaults()
+            if "bsi" in parameters.keys():
+                base_simulation_id = parameters.get("bsi")
+                params = self.__get_defaults(base_simulation_id)
+            else:
+                params = self.__get_defaults()
 
-        response = self._sender.send_run_request(**params)
+        response = self._sender.send_run_request(params)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
         task_id = self._handler.handle_response_to_run_request()
@@ -269,12 +274,16 @@ class Simulation(AbstractEntity):
             return Task(self._app_session, task_id)
         return None
 
-    def __get_defaults(self):
+    def __get_defaults(self, base_simulation_id=None):
         """
         Obtain default parameters for run/post-process task
+        :param base_simulation_id: ID of base simulation for getting defaults
         :return: dictionary containing default task running parameters such as solver, cluster, etc.
         """
-        response = self._sender.send_task_defaults_request(self.identifier)
+        if base_simulation_id:
+            response = self._sender.send_task_defaults_request(self.identifier, base_simulation_id)
+        else:
+            response = self._sender.send_task_defaults_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
         task_startup_defaults = self._handler.handle_response_to_task_defaults_request()

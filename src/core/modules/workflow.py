@@ -282,7 +282,8 @@ class WorkFlow(object):
                         len(uploaded_submodels)))
                     # start with default parameters
                     terminal.show_info_message("Trying to run current simulation...")
-                    current_task = current_simulation.run()
+                    # obtain default parameters to run tasks from base simulation
+                    current_task = current_simulation.run(bsi=base_simulation.identifier)
                     vertex.current_task = current_task
                     if current_task:
                         # if task created successfully, get status
@@ -338,15 +339,15 @@ class WorkFlow(object):
         # main loop - while all tasks are done or some failure occurred
         while not stop_main_loop:
 
-            # TODO: remove vertices with status == "Finished" from main loop
-            # iterate over dictionary of all workflow graph vertices {id -> Vertex}
+            # iterate over all workflow graph vertices
             # remove vertices wish status = "Finished"
+            # modify original list, no list copies, only one pass: traditional solution is to iterate backwards
             for i in reversed(range(len(vertices))):
                 v = vertices[i]
 
                 # check vertex links
                 # if links list is empty, vertex is at root level and it's simulation can be started
-                if len(v.links == 0):
+                if len(v.links) == 0:
                     terminal.show_info_message("Vertex {} has no linked vertices".format(v.object_id))
                     r = status_based_behaviour(v)
                     rs[i] = r

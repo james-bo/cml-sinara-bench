@@ -52,6 +52,8 @@ class AppSession(object):
 
             if status:
                 workflow = WorkFlow(self)
+                # God bless this script
+                workflow.execute_all_tasks()
         except Exception as e:
             import traceback
             print(e)
