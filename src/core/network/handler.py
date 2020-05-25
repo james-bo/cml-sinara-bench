@@ -150,6 +150,11 @@ class Handler(object):
                     if item_id:
                         list_of_submodels.append(item_id)
             return list_of_submodels
+        # for the case of empty response
+        response_status = self.__response.status_code
+        if response_status == 200:
+            terminal.show_warning_message("Simulation has no submodels!")
+            return list_of_submodels
         terminal.show_error_message("There were some errors during reading simulation submodels!")
         return None
 

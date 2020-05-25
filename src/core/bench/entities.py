@@ -281,7 +281,7 @@ class Simulation(AbstractEntity):
         :return: dictionary containing default task running parameters such as solver, cluster, etc.
         """
         if base_simulation_id:
-            response = self._sender.send_task_defaults_request(self.identifier, base_simulation_id)
+            response = self._sender.send_task_defaults_request(base_simulation_id)
         else:
             response = self._sender.send_task_defaults_request(self.identifier)
         Timeout.hold_your_horses()
