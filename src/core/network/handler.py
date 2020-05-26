@@ -11,7 +11,7 @@ class Handler(object):
     def set_response(self, response):
         self.__response = response
 
-# Authorization requests
+# ---------------------------------------------- Authorization requests ---------------------------------------------- #
 
     def handle_response_to_login_request(self):
         """
@@ -27,7 +27,7 @@ class Handler(object):
         terminal.show_error_message("Failed to connect!")
         return False
 
-# Common entities requests
+# --------------------------------------------- Common entities requests --------------------------------------------- #
 
     def handle_response_to_entity_base_info_request(self):
         """
@@ -77,7 +77,7 @@ class Handler(object):
 
         return info
 
-# Loadcase requests
+# ------------------------------------------------ Loadcase requests ------------------------------------------------- #
 
     def handle_response_to_loadcase_simulations_request(self):
         """
@@ -100,7 +100,69 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading loadcase simulations!")
         return None
 
-# Simulation requests
+    def handle_response_to_loadcase_targets_request(self):
+        """
+        Handles response to loadcase targets request
+        :return: list of dictionaries with keys:
+                 - `id`
+                 - `name`
+                 - `value`
+                 - `condition`
+                 - `dimension`
+                 containing information of loadcase targets, or None, if some error occurred
+        """
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            targets_data = []
+            content = response_json.get("content")
+            if content:
+                for item in content:
+                    if item and isinstance(item, dict):
+                        target_id = item.get("id")
+                        target_name = item.get("name")
+                        target_value = item.get("value")
+                        target_condition = item.get("conditionId")
+                        target_dimension = item.get("dimension")
+                        if target_id:
+                            targets_data.append({"id": target_id,
+                                                 "name": target_name,
+                                                 "value": target_value,
+                                                 "condition": target_condition,
+                                                 "dimension": target_dimension})
+                return targets_data
+            terminal.show_warning_message("No targets read from loadcase!")
+            return []
+        terminal.show_error_message("There were some errors during reading loadcase targets!")
+        return None
+
+    def handle_response_to_add_loadcase_target_request(self):
+        """
+        Handles response to add new loadcase target request
+        :return: dictionary with keys:
+                 - `id`
+                 - `name`
+                 - `value`
+                 - `condition`
+                 - `dimension`
+                 containing information of created target, or None, if some error occurred
+        """
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            target_id = response_json.get("id")
+            target_name = response_json.get("name")
+            target_value = response_json.get("value")
+            target_condition = response_json.get("conditionId")
+            target_dimension = response_json.get("dimension")
+            if target_id:
+                return {"id": target_id,
+                        "name": target_name,
+                        "value": target_value,
+                        "condition": target_condition,
+                        "dimension": target_dimension}
+        terminal.show_error_message("There were some errors during adding new target value!")
+        return None
+
+# ----------------------------------------------- Simulation requests ------------------------------------------------ #
 
     def handle_response_to_clone_simulation_request(self):
         """
@@ -222,7 +284,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during sending simulation to run!")
         return None
 
-# Task requests
+# -------------------------------------------------- Task requests --------------------------------------------------- #
 
     def handle_response_to_task_status_response(self):
         """
@@ -237,7 +299,7 @@ class Handler(object):
         terminal.show_error_message("Failed to get task status.")
         return None
 
-# Submodel requests
+# ------------------------------------------------ Submodel requests ------------------------------------------------- #
 
     def handle_response_to_upload_submodel_request(self):
         """

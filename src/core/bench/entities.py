@@ -97,6 +97,99 @@ class Loadcase(AbstractEntity):
             return simulations
         return None
 
+    def get_targets(self):
+        """
+        :return: list of targets which belong to current loadcase,
+                 or None, if some error occurred during reading targets
+        """
+        response = self._sender.send_loadcase_targets_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        targets_data_list = self._handler.handle_response_to_loadcase_targets_request()
+        if targets_data_list:
+            targets = []
+            for target_data in targets_data_list:
+                targets.append([Target(self._app_session, target_data)])
+            return targets
+        return None
+
+    def add_target(self, name, value, condition, dimension, tolerance=None, description=None):
+        if condition == 1:
+            condition_name = ">"
+        elif condition == 2:
+            condition_name = "<"
+        elif condition == 3:
+            condition_name = "+/-"
+        else:
+            terminal.show_error_message("Unsupported condition for new target: {}".format(condition))
+            return None
+
+        if tolerance is None:
+            has_tolerance = False
+        else:
+            has_tolerance = True
+
+        payload = {"conditionId": condition,
+                   "conditionName": condition_name,
+                   "description": description,
+                   "dimension": dimension,
+                   "hasTolerance": has_tolerance,
+                   "hierarchy": {"id": self.identifier,
+                                 "objectType": {"displayName": "Loadcase",
+                                                "iconSkin": "icon-loadcase",
+                                                "isLeaf": False,
+                                                "name": "loadcase",
+                                                "subType": None,
+                                                "tooltip": "Loadcase"},
+                                 "parent": None},
+                   "name": name,
+                   "objectType": {"displayName": "Target value",
+                                  "name": "targetValue",
+                                  "subType": None,
+                                  "tooltip": "Target value"},
+                   "tolerance": tolerance,
+                   "value": value}
+        response = self._sender.send_add_loadcase_target_request(self.identifier, payload)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        target_data = self._handler.handle_response_to_add_loadcase_target_request()
+        if target_data:
+            return Target(self._app_session, target_data)
+        return None
+
+
+class Target(object):
+    """
+    Class for representation of the target entity
+    """
+    def __init__(self, app_session, data):
+        assert isinstance(data, dict)
+        self.__identifier = data.get("id")
+        self.__name = data.get("name")
+        self.__value = data.get("value")
+        self.__condition = data.get("conditionId")
+        self.__dimension = data.get("dimension")
+
+    @property
+    def identifier(self):
+        return self.__identifier
+
+    @property
+    def name(self):
+        return self.__name
+
+    @property
+    def value(self):
+        return self.__value
+
+    @property
+    def condition(self):
+        return self.__condition
+
+    @property
+    def dimension(self):
+        return self.__dimension
+
 
 class Simulation(AbstractEntity):
     """
