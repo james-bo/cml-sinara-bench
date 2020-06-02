@@ -212,7 +212,7 @@ class WorkFlow(object):
             terminal.show_info_message("Workflow initialization...")
             self.__app_session = app_session
             self.__graph = Graph(self.app_session)
-            self.__json_data_manager = JSONDataManager(self.app_session)
+            self.__json_data_manager = JSONDataManager(self.app_session.json)
             self.__json_data = self.__json_data_manager.get_json_data()
 
             terminal.show_info_message("Application session: {}".format(self.app_session.sid))
@@ -388,3 +388,6 @@ class WorkFlow(object):
                 Timeout.pause(WorkFlow.WALK_INTERVAL)
             else:
                 terminal.show_info_message("Terminating main loop ...")
+
+    def collect_values(self):
+        pass

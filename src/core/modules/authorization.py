@@ -18,11 +18,11 @@ class Authorization(object):
         Establish active connection to CML-Bench
         :return: connection status (True or False)
         """
-        if not self.__app_session.key_file_path:
+        if not self.__app_session.credentials:
             self.__username = terminal.request_string_input("Username")
             self.__password = terminal.request_hidden_input("Password")
         else:
-            credentials_info = KeyFileInformation(self.__app_session.key_file_path)
+            credentials_info = KeyFileInformation(self.__app_session.credentials)
             if credentials_info.status_code != 0:
                 terminal.show_error_message(credentials_info.status_description)
                 sys.exit(credentials_info.status_code)

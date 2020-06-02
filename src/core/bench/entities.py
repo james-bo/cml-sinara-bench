@@ -3,6 +3,8 @@ import enum
 from core.network.timeout import Timeout
 from ui.console import terminal
 
+# -------------------------------------------- Entity Types (Enumeration) -------------------------------------------- #
+
 
 class EntityTypes(enum.Enum):
     LOADCASE = "loadcase"
@@ -10,6 +12,8 @@ class EntityTypes(enum.Enum):
     TASK = "task"
     STYPE = "submodelType"
     SUBMODEL = "submodel"
+
+# ---------------------------------------------- Abstract Entity Object ---------------------------------------------- #
 
 
 class AbstractEntity(object):
@@ -70,6 +74,8 @@ class AbstractEntity(object):
             self._parent_id = base_info.get("parent_id")
             self._tree_path = base_info.get("tree_path")
             self._tree_id = base_info.get("tree_id")
+
+# ------------------------------------------------- Loadcase Object -------------------------------------------------- #
 
 
 class Loadcase(AbstractEntity):
@@ -157,6 +163,8 @@ class Loadcase(AbstractEntity):
             return Target(self._app_session, target_data)
         return None
 
+# ------------------------------------------------- Loadcase Target -------------------------------------------------- #
+
 
 class Target(object):
     """
@@ -189,6 +197,47 @@ class Target(object):
     @property
     def dimension(self):
         return self.__dimension
+
+# ---------------------------------------------- Simulation Key Result ----------------------------------------------- #
+
+
+class Value(object):
+    """
+    Class for representation of the key result entity
+    """
+    def __init__(self, data):
+        self.__key_result_id = data.get("id")
+        self.__key_result_name = data.get("name")
+        self.__key_result_value = data.get("value")
+        self.__key_result_dimension = data.get("dimension")
+        self.__key_result_description = data.get("description")
+        self.__key_result_parent_id = data.get("parent")
+
+    @property
+    def identifier(self):
+        return self.__key_result_id
+
+    @property
+    def name(self):
+        return self.__key_result_name
+
+    @property
+    def value(self):
+        return self.__key_result_value
+
+    @property
+    def dimension(self):
+        return self.__key_result_dimension
+
+    @property
+    def description(self):
+        return self.__key_result_description
+
+    @property
+    def parent(self):
+        return self.__key_result_parent_id
+
+# ------------------------------------------------ Simulation Object ------------------------------------------------- #
 
 
 class Simulation(AbstractEntity):
@@ -233,6 +282,21 @@ class Simulation(AbstractEntity):
         self._handler.set_response(response)
         simulation_files_list_of_dicts = self._handler.handle_response_to_simulation_files_request()
         return simulation_files_list_of_dicts
+
+    def get_values(self):
+        """
+        :return: return list of Values, or None, if some error occurred during reading
+        """
+        response = self._sender.send_simulation_values_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        simulation_values_data = self._handler.handle_response_to_simulation_values_request()
+        values = []
+        if simulation_values_data:
+            for item_data in simulation_values_data:
+                values.append(Value(item_data))
+            return values
+        return None
 
     def download_files(self, *files):
         """
@@ -382,6 +446,8 @@ class Simulation(AbstractEntity):
         task_startup_defaults = self._handler.handle_response_to_task_defaults_request()
         return task_startup_defaults
 
+# --------------------------------------------------- Task Object ---------------------------------------------------- #
+
 
 class Task(AbstractEntity):
     """
@@ -401,6 +467,8 @@ class Task(AbstractEntity):
         self._handler.set_response(response)
         task_status = self._handler.handle_response_to_task_status_response()
         return task_status
+
+# -------------------------------------------------- S|Type Object --------------------------------------------------- #
 
 
 class SubmodelType(AbstractEntity):
@@ -464,6 +532,8 @@ class SubmodelType(AbstractEntity):
                     deleted_sumbodel_id = self._handler.handle_response_to_delete_submodel_from_server_request()
                     terminal.show_warning_message("Duplicates was deleted")
         return submodels
+
+# ------------------------------------------------- Submodel Object -------------------------------------------------- #
 
 
 class Submodel(AbstractEntity):

@@ -284,6 +284,49 @@ class Handler(object):
         terminal.show_error_message("There were some errors during sending simulation to run!")
         return None
 
+    def handle_response_to_simulation_values_request(self):
+        """
+        Handles response to simulation key results
+        :return: list of dictionaries with keys `id`, `name`, `value`, `dimension`, `description`, `parent` representing
+                 simulation key results, or None, if some error occurred
+        """
+
+        def remove_prefix(string, prefix):
+            if string.startswith(prefix):
+                return string[len(prefix):]
+            return string
+
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            list_of_values = []
+            content = response_json.get("content")
+            if content:
+                for item in content:
+                    if item and isinstance(item, dict):
+                        kr_id = item.get("id")
+                        kr_name = item.get("name")
+                        kr_dimension = None
+                        kr_value = None
+                        kr_description = item.get("description")
+                        kr_repr = item.get("overview").get("content")
+                        kr_parent = item.get("simulationId")
+                        kr_type = item.get("type")
+                        if kr_id and kr_type == "value":
+                            details_response = self.__app_session.sender.send_simulation_value_request(kr_parent, kr_id)
+                            if details_response and details_response.status_code == 200:
+                                details_response_json = details_response.json()
+                                kr_value = details_response_json.get(kr_name)
+                                kr_dimension = remove_prefix(str(kr_repr), str(kr_value))
+                        list_of_values.append({"id": kr_id,
+                                               "name": kr_name,
+                                               "value": kr_value,
+                                               "dimension": kr_dimension,
+                                               "description": kr_description,
+                                               "parent": kr_parent})
+                return list_of_values
+        terminal.show_error_message("There were some errors during reading simulation key results")
+        return None
+
 # -------------------------------------------------- Task requests --------------------------------------------------- #
 
     def handle_response_to_task_status_response(self):

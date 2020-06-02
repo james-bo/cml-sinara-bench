@@ -1,5 +1,6 @@
 # coding: utf-8
 import requests
+import uuid
 from core.network.sender import Sender
 from core.network.handler import Handler
 from core.modules.authorization import Authorization
@@ -15,19 +16,30 @@ class AppSession(object):
             self.__handler = Handler(self)
         else:
             raise ValueError("No configuration information available")
+
         if "credentials" in kwargs.keys():
             self.__key_file = kwargs.get("credentials")
         else:
             self.__key_file = None
-        self.__sid = 1234
+
+        if "json" in kwargs.keys():
+            self.__json_file = kwargs.get("json")
+        else:
+            raise ValueError("No JSON file selected")
+
+        self.__sid = uuid.uuid1()
 
     @property
     def sid(self):
-        return self.__sid
+        return str(self.__sid)
 
     @property
     def cfg(self):
         return self.__configuration_information
+
+    @property
+    def json(self):
+        return self.__json_file
 
     @property
     def session(self):
@@ -42,7 +54,7 @@ class AppSession(object):
         return self.__handler
 
     @property
-    def key_file_path(self):
+    def credentials(self):
         return self.__key_file
 
     def execute(self):
@@ -53,7 +65,7 @@ class AppSession(object):
             if status:
                 workflow = WorkFlow(self)
                 # God bless this script
-                workflow.execute_all_tasks()
+                # workflow.execute_all_tasks()
         except Exception as e:
             import traceback
             print(e)

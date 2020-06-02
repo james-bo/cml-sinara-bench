@@ -105,6 +105,20 @@ class Sender(object):
         response = self.__http_session.post(url, json=parameters)
         return response
 
+    def send_simulation_values_request(self, entity_id, max_number=10):
+        url = "{}/rest/simulation/{}/keyResult/list".format(self.__host, entity_id)
+        response = self.__http_session.post(url, json={"filters": {"list": [{"name": "type",
+                                                                             "value": "value"}]},
+                                                       "sort": [],
+                                                       "pageable": {"size": max_number,
+                                                                    "page": 1}})
+        return response
+
+    def send_simulation_value_request(self, simulation_id, value_id):
+        url = "{}/rest/simulation/{}/keyResult/{}".format(self.__host, simulation_id, value_id)
+        response = self.__http_session.get(url)
+        return response
+
 # -------------------------------------------------- Task requests --------------------------------------------------- #
 
     def send_task_status_request(self, entity_id):
