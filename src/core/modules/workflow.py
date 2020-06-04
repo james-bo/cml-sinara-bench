@@ -1,8 +1,28 @@
 # coding: utf-8
+import enum
 import core.bench.entities
 from ui.console import terminal
 from core.dao.local_data_manager import JSONDataManager
 from core.network.timeout import Timeout
+
+# -------------------------------------------- Supported JSON Properties --------------------------------------------- #
+
+
+class JSONProps(enum.Enum):
+    VERTEX_ID = "object_id"
+    BASE_SIMULATION_ID = "base_simulation_id"
+    CURR_SIMULATION_ID = "bench_id"
+    CURR_TASK_ID = "task_id"
+    VERTEX_STATUS = "task_status"
+    SOLVER = "solver"
+    STORYBOARD = "storyboard"
+    SUBMODELS = "submodels"
+    RESULTS = "results"
+    PARENTS = "parents"
+    TARGETS = "targets"
+    VALUES = "current_values"
+
+# --------------------------------------------------- Graph Vertex --------------------------------------------------- #
 
 
 class Vertex(object):
@@ -10,124 +30,267 @@ class Vertex(object):
         self.__app_session = app_session
         assert isinstance(data, dict)
 
-        # Vertex ID = Object ID in JSON file
-        self.__object_id = data.get("object_id")
+        # ----------------------------- All possible parameters written in graph vertex ------------------------------ #
 
-        # Current Simulation ID in CML-Bench
-        self.__bench_id = data.get("bench_id")
-        if self.__bench_id:
-            self.__current_simulation = core.bench.entities.Simulation(self.app_session, self.__bench_id)
-        else:
-            self.__current_simulation = None
+        # • Vertex ID (`object_id` in JSON)
+        self.__vertex_id = None
 
-        # Base (Reference) Simulation ID in CML-Bench
-        self.__base_simulation_id = data.get("base_simulation_id")
-        if self.__base_simulation_id:
-            self.__base_simulation = core.bench.entities.Simulation(self.app_session, self.__base_simulation_id)
-        else:
-            terminal.show_error_message("Base simulation is not defined")
-            self.__base_simulation = None
+        # • Base (Reference) simulation (`bases_simulation_id` is its identifier)
+        self.__base_simulation = None
 
-        # Current Task ID in CML-Bench
-        self.__task_id = data.get("task_id")
-        if self.__task_id:
-            self.__current_task = core.bench.entities.Task(self.app_session, self.__task_id)
-            if self.__current_task not in self.__current_simulation.get_tasks():
-                terminal.show_error_message("Defined task does not belong to defined simulation")
-        else:
-            self.__current_task = None
+        # • Current simulation (`bench_id` is current simulation identifier)
+        self.__current_simulation = None
 
-        # Current Task status in CML-Bench
-        self.__task_status = data.get("task_status")
-        if self.__current_task or self.__task_status != "New":
-            if self.__task_status != self.__current_task.get_status():
-                terminal.show_error_message("Defined status does not match existing task status")
+        # • Current task (`task_id` in JSON)
+        self.__current_task = None
 
-        # Deprecated field
-        self.__trimmed_path = data.get("trimmed_path")
+        # • Vertex status
+        self.__vertex_status = None
 
-        # List of submodel files for current simulation
-        self.__submodels = data.get("submodels")
+        # • Non-default solver for current task
+        self.__solver = None
 
-        # List of results file for current simulation
-        self.__results = data.get("results")
+        # • Non-default storyboard for current task
+        self.__storyboard = None
 
-        # List of parent vertices IDs (which status must be 'ok' for starting current simulation)
-        self.__parent_objects_ids = data.get("parents")
+        # • Submodels of current simulation (names of files in local storage)
+        self.__submodels = None
 
-        # Deprecated field
-        self.__children_object_ids = data.get("children")
+        # • Result files of current simulation (for downloading; names of files in server storage)
+        self.__results = None
 
-        # List of parent vertices (objects)
+        # • Parent vertices IDs (that must be successfully finished before starting the current one)
+        self.__parents = None
+
+        # • Parent vertices (as objects)
         self.__links = []
 
-        # S|Type to upload submodels
+        # • Targets of current loadcase (defined as parent of base simulation)
+        self.__targets = None
+
+        # • Key results of current simulation
+        self.__values = None
+
+        # • S|Type for current loadcase (basically defied in configuration file)
         self.__stype = core.bench.entities.SubmodelType(self.app_session, self.app_session.cfg.server_storage)
+
+        # ------------------------------------ Fill fields with values from JSON ------------------------------------- #
+        if JSONProps.VERTEX_ID.value in data.keys():
+            self.__vertex_id = data.get(JSONProps.VERTEX_ID.value)
+
+        if JSONProps.BASE_SIMULATION_ID.value in data.keys():
+            base_sim_id = data.get(JSONProps.BASE_SIMULATION_ID.value)
+            if base_sim_id is not None:
+                self.__base_simulation = core.bench.entities.Simulation(self.app_session, base_sim_id)
+            else:
+                terminal.show_error_message("Base (Reference) simulation is not defined in JSON file")
+
+        if JSONProps.CURR_SIMULATION_ID.value in data.keys():
+            curr_sim_id = data.get(JSONProps.CURR_SIMULATION_ID.value)
+            if curr_sim_id is not None:
+                self.__current_simulation = core.bench.entities.Simulation(self.app_session, curr_sim_id)
+
+        if JSONProps.CURR_TASK_ID.value in data.keys():
+            curr_task_id = data.get(JSONProps.CURR_TASK_ID.value)
+            if curr_task_id is not None:
+                self.__current_task = core.bench.entities.Task(self.app_session, curr_task_id)
+                if self.__current_task not in self.__current_simulation.get_tasks():
+                    terminal.show_error_message("Defined task does not belong to defined simulation")
+
+        if JSONProps.VERTEX_STATUS.value in data.keys():
+            vertex_status = data.get(JSONProps.VERTEX_STATUS.value)
+            if vertex_status is not None:
+                self.__vertex_status = vertex_status
+                if vertex_status != "New" and self.__current_task.get_status() != vertex_status:
+                    terminal.show_error_message("Defined status does not match existing task status")
+
+        if JSONProps.SOLVER.value in data.keys():
+            task_solver = data.get(JSONProps.SOLVER.value)
+            if task_solver is not None:
+                self.__solver = task_solver
+
+        if JSONProps.STORYBOARD.value in data.keys():
+            task_stb = data.get(JSONProps.STORYBOARD.value)
+            if task_stb is not None:
+                self.__storyboard = task_stb
+
+        if JSONProps.SUBMODELS.value in data.keys():
+            curr_sim_subs = data.get(JSONProps.SUBMODELS.value)
+            if curr_sim_subs is not None:
+                self.__submodels = curr_sim_subs
+
+        if JSONProps.RESULTS.value in data.keys():
+            curr_sim_res = data.get(JSONProps.RESULTS.value)
+            if curr_sim_res is not None:
+                self.__results = curr_sim_res
+
+        if JSONProps.PARENTS.value in data.keys():
+            vertex_parents_ids = data.get(JSONProps.PARENTS.value)
+            if vertex_parents_ids is not None:
+                self.__parents = vertex_parents_ids
+
+        if JSONProps.TARGETS.value in data.keys():
+            curr_sim_targets = data.get(JSONProps.TARGETS.value)
+            if curr_sim_targets is not None:
+                self.__targets = curr_sim_targets
+
+        if JSONProps.VALUES.value in data.keys():
+            curr_sim_values = data.get(JSONProps.VALUES.value)
+            if curr_sim_values is not None:
+                self.__values = curr_sim_values
+
+    # ---------------------------------------------- Vertex Properties ----------------------------------------------- #
 
     @property
     def app_session(self):
+        """
+        :return: Current application session, for usage of configuration, sender, handler and create entities
+        """
         return self.__app_session
 
     @property
-    def object_id(self):
-        return self.__object_id
-
-    @property
-    def parents_ids(self):
-        return self.__parent_objects_ids
-
-    @property
-    def links(self):
+    def identifier(self):
         """
-        zwo, drei, vier
+        :return: Vertex ID
         """
-        return self.__links
+        return self.__vertex_id
 
     @property
     def base_simulation(self):
+        """
+        :return: Base (Reference) simulation object
+        """
         return self.__base_simulation
 
     @property
     def current_simulation(self):
+        """
+        :return: Current simulation object
+        """
         return self.__current_simulation
 
     @current_simulation.setter
     def current_simulation(self, current_simulation):
+        """
+        Current simulation setter
+        :param current_simulation: Current simulation object
+        """
+        assert isinstance(current_simulation, core.bench.entities.Simulation)
         self.__current_simulation = current_simulation
-        self.__bench_id = current_simulation.identifier
 
     @property
     def current_task(self):
+        """
+        :return: Current task object
+        """
         return self.__current_task
 
     @current_task.setter
     def current_task(self, current_task):
+        """
+        Current task setter. Changes vertex status
+        :param current_task: Current task object
+        """
+        assert isinstance(current_task, core.bench.entities.Task)
         self.__current_task = current_task
-        self.__task_status = current_task.get_status
+        self.__vertex_status = current_task.get_status
 
     @property
     def status(self):
-        return self.__task_status
+        """
+        :return: Vertex status (for most cases equal to current task status)
+        """
+        return self.__vertex_status
 
     @status.setter
     def status(self, status):
+        """
+        Vertex status setter. Checks equality to current task status
+        :param status: Vertex status
+        """
         if status == self.__current_task.get_status():
-            self.__task_status = status
+            self.__vertex_status = status
+
+    @property
+    def solver(self):
+        """
+        :return: Current task solver
+        """
+        return self.__solver
+
+    @property
+    def storyboard(self):
+        """
+        :return: Current task storyboard
+        """
+        return self.__storyboard
 
     @property
     def submodels(self):
+        """
+        :return: List of full paths to submodels files in local storage
+        """
         return [self.app_session.cfg.local_storage + "/" + f for f in self.__submodels]
 
     @property
     def results(self):
+        """
+        :return: List of results files of current simulation
+        """
         return self.__results
 
     @property
+    def parents(self):
+        """
+        :return: List of parent vertices IDs
+        """
+        return self.__parents
+
+    @property
+    def links(self):
+        """
+        Links zwo, drei, vier
+        :return: List of parent vertices objects
+        """
+        return self.__links
+
+    @property
+    def targets(self):
+        """
+        :return: List of current simulation targets.
+                 List elements are dictionaries with keys:
+                 - `name`
+                 - `value`
+                 - `condition`
+                 - `dimension`
+                 - `tolerance`
+                 - `description`
+        """
+        return self.__targets
+
+    @property
+    def values(self):
+        """
+        :return: List of current simulation values.
+                 List elements are dictionaries with keys:
+                 - `name`
+                 - `value`
+                 - `dimension`
+                 - `description`
+        """
+        return self.__values
+
+    @property
     def stype(self):
+        """
+        :return: S|Type object
+        """
         return self.__stype
 
+    # ------------------------------------------------ Vertex Methods ------------------------------------------------ #
+
     def __repr__(self):
-        self_id = self.object_id
+        self_id = self.identifier
         base_id = self.base_simulation.identifier if self.base_simulation else "-"
         curr_id = self.current_simulation.identifier if self.current_simulation else "-"
         return "\nVertex ID               : {}\nBase simulation         : {}\nCurrent simulation      : {}".format(
@@ -137,6 +300,8 @@ class Vertex(object):
     def add_link(self, vertex):
         assert isinstance(vertex, Vertex)
         self.__links.append(vertex)
+
+# -------------------------------------------------- Workflow Graph -------------------------------------------------- #
 
 
 class Graph(object):
@@ -187,11 +352,13 @@ class Graph(object):
         :return:
         """
         for vertex in self.vertices.values():
-            for parent_id in vertex.parents_ids:
+            for parent_id in vertex.parents:
                 parent_vertex = self.vertices.get(parent_id)
                 if parent_vertex:
                     self.__edges.append((vertex, parent_vertex))
                     vertex.add_link(parent_vertex)
+
+# ----------------------------------------------------- Workflow ----------------------------------------------------- #
 
 
 class WorkFlow(object):
@@ -213,18 +380,36 @@ class WorkFlow(object):
             self.__app_session = app_session
             self.__graph = Graph(self.app_session)
             self.__json_data_manager = JSONDataManager(self.app_session.json)
+            self.__json_behaviour = self.__json_data_manager.get_behaviour()
             self.__json_data = self.__json_data_manager.get_json_data()
 
             terminal.show_info_message("Application session: {}".format(self.app_session.sid))
 
-            for data in self.__json_data.values():
-                self.__graph.add_vertex(data)
+            # TODO:
+            #   Different logic which depends on JSON `Behaviour` field
+            #   - If `Behaviour` = `Solve`,
+            #     build workflow graph (add vertices, build edges),
+            #     `execute_all_tasks()` method can be called
+            #   - If `Behaviour` = `Update targets`,
+            #     only add vertices, determine CML-Bench loadcase from `bench_id` or `base_simulation_id`,
+            #     create or update (?) loadcase targets
+            #   - If `Behaviour` = `Dump`,
+            #     whole application must be run with `-r` key
+            #   - If `Behaviour` = `Values`,
+            #     JSON cannot be passed as input file
 
-            terminal.show_info_message("Workflow graph vertices: {}".format(self.__graph.vertices.values()))
+            if self.__json_behaviour == "Solving":
+                terminal.show_info_message("JSON behaviour: Solving. Building workflow graph...")
+                for data in self.__json_data.values():
+                    self.__graph.add_vertex(data)
+                terminal.show_info_message("Workflow graph vertices: {}".format(self.__graph.vertices.values()))
+                self.__graph.build_graph_edges()
+                terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
 
-            self.__graph.build_graph_edges()
-
-            terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
+            elif self.__json_behaviour == "Update targets":
+                terminal.show_info_message("JSON behaviour: Update targets.")
+                for data in self.__json_data.values():
+                    self.__graph.add_vertex(data)
 
         else:
 
@@ -240,11 +425,17 @@ class WorkFlow(object):
     def graph(self):
         return self.__graph
 
-    def execute_all_tasks(self):
+    @property
+    def json_type(self):
+        return self.__json_behaviour
+
+    def run_all_tasks(self):
         """
         Main method of workflow. Run all simulations in graph vertices.
         :return:
         """
+        if self.json_type != "Solving":
+            raise ValueError("Method `run_all_tasks()` can not be called for JSON of type `{}`".format(self.json_type))
 
         def status_based_behaviour(vertex):
             """
@@ -256,7 +447,7 @@ class WorkFlow(object):
                                      1: current simulation is done
             """
             assert isinstance(vertex, Vertex)
-            terminal.show_info_message("Processing vertex with ID: {}".format(vertex.object_id))
+            terminal.show_info_message("Processing vertex with ID: {}".format(vertex.identifier))
 
             # if status is "New",
             #   - clone base simulation
@@ -348,20 +539,20 @@ class WorkFlow(object):
                 # check vertex links
                 # if links list is empty, vertex is at root level and it's simulation can be started
                 if len(v.links) == 0:
-                    terminal.show_info_message("Vertex {} has no linked vertices".format(v.object_id))
+                    terminal.show_info_message("Vertex {} has no linked vertices".format(v.identifier))
                     r = status_based_behaviour(v)
                     rs[i] = r
                     if r == -1:
-                        terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
+                        terminal.show_error_message("Failed while processing vertex {}".format(v.identifier))
                         stop_main_loop = True
                         break
                     if r == 1:
-                        terminal.show_info_message("Vertex {} done".format(v.object_id))
+                        terminal.show_info_message("Vertex {} done".format(v.identifier))
                         del vertices[i]
 
                 # else, if links list is not empty,
                 else:
-                    terminal.show_info_message("Vertex {} has {} linked vertices".format(v.object_id, len(v.links)))
+                    terminal.show_info_message("Vertex {} has {} linked vertices".format(v.identifier, len(v.links)))
                     terminal.show_info_message("Checking status of linked vertices...")
 
                     # check status of all linked vertices
@@ -372,11 +563,11 @@ class WorkFlow(object):
                         r = status_based_behaviour(v)
                         rs[i] = r
                         if r == -1:
-                            terminal.show_error_message("Failed while processing vertex {}".format(v.object_id))
+                            terminal.show_error_message("Failed while processing vertex {}".format(v.identifier))
                             stop_main_loop = True
                             break
                         if r == 1:
-                            terminal.show_info_message("Vertex {} done".format(v.object_id))
+                            terminal.show_info_message("Vertex {} done".format(v.identifier))
                             del vertices[i]
                     else:
                         terminal.show_info_message("Some linked vertices is not finished yet...")
@@ -389,5 +580,11 @@ class WorkFlow(object):
             else:
                 terminal.show_info_message("Terminating main loop ...")
 
+    def change_targets(self):
+        pass
+
     def collect_values(self):
+        pass
+
+    def create_dump(self):
         pass
