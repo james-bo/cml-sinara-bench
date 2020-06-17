@@ -92,6 +92,8 @@ class Loadcase(AbstractEntity):
         :return: list of simulations which belong to current loadcase,
                  or None, if some error occurred during reading simulations
         """
+        terminal.show_info_objects(self.get_simulations, self.identifier)
+
         response = self._sender.send_loadcase_simulations_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -108,6 +110,8 @@ class Loadcase(AbstractEntity):
         :return: list of targets which belong to current loadcase,
                  or None, if some error occurred during reading targets
         """
+        terminal.method_info(self.get_targets, self.identifier)
+
         response = self._sender.send_loadcase_targets_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -115,11 +119,24 @@ class Loadcase(AbstractEntity):
         if targets_data_list:
             targets = []
             for target_data in targets_data_list:
-                targets.append([Target(self._app_session, target_data)])
+                targets.append([Target(target_data)])
             return targets
         return None
 
     def add_target(self, name, value, condition, dimension, tolerance=None, description=None):
+        """
+        Adds new target to loadcase
+        :param name: target name
+        :param value: target value
+        :param condition: target condition: 1 - >, 2 - <, 3 - +/-
+        :param dimension: target dimension
+        :param tolerance: tolerance for condition
+        :param description: description for target
+        :return: target object
+        """
+        terminal.method_info(self.add_target, self.identifier, name, value, condition, dimension,
+                             tolerance=tolerance, description=description)
+
         if condition == 1:
             condition_name = ">"
         elif condition == 2:
@@ -160,7 +177,7 @@ class Loadcase(AbstractEntity):
         self._handler.set_response(response)
         target_data = self._handler.handle_response_to_add_loadcase_target_request()
         if target_data:
-            return Target(self._app_session, target_data)
+            return Target(target_data)
         return None
 
 # ------------------------------------------------- Loadcase Target -------------------------------------------------- #
@@ -170,7 +187,7 @@ class Target(object):
     """
     Class for representation of the target entity
     """
-    def __init__(self, app_session, data):
+    def __init__(self, data):
         assert isinstance(data, dict)
         self.__identifier = data.get("id")
         self.__name = data.get("name")
@@ -253,6 +270,8 @@ class Simulation(AbstractEntity):
         """
         :return: parent loadcase of current simulation
         """
+        terminal.method_info(self.get_loadcase, self.identifier)
+
         return Loadcase(self._app_session, self.parent_id)
 
     def get_tasks(self):
@@ -260,6 +279,8 @@ class Simulation(AbstractEntity):
         :return: return list of tasks which belong to current simulation,
                  or None, if some error occurred during reading tasks
         """
+        terminal.method_info(self.get_tasks, self.identifier)
+
         response = self._sender.send_simulation_tasks_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -277,6 +298,8 @@ class Simulation(AbstractEntity):
                  where fileName is a file belongs to current simulation,
                  or None, if some error occurred during reading files
         """
+        terminal.method_info(self.get_files, self.identifier)
+
         response = self._sender.send_simulation_files_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -287,6 +310,8 @@ class Simulation(AbstractEntity):
         """
         :return: return list of Values, or None, if some error occurred during reading
         """
+        terminal.method_info(self.get_values, self.identifier)
+
         response = self._sender.send_simulation_values_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -304,6 +329,8 @@ class Simulation(AbstractEntity):
         :param files: files to be downloaded
         :return: return list of successfully downloaded files
         """
+        terminal.method_info(self.download_files, self.identifier, *files)
+
         list_of_downloaded_files = []
         simulation_files = self.get_files()
         list_of_simulation_file_ids = [item.get("id") for item in simulation_files]
@@ -331,6 +358,8 @@ class Simulation(AbstractEntity):
         Clone current simulation
         :return: return new simulation, or None, if some error occurred
         """
+        terminal.method_info(self.clone, self.identifier)
+
         response = self._sender.send_clone_simulation_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -343,6 +372,8 @@ class Simulation(AbstractEntity):
         """
         :return: return list of current simulation submodels, or None, if some error occurred
         """
+        terminal.method_info(self.get_submodels, self.identifier)
+
         response = self._sender.send_simulation_submodels_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -360,6 +391,8 @@ class Simulation(AbstractEntity):
         :param submodels: submodels to be added into current simulation
         :return: list of ALL simulation submodels
         """
+        terminal.method_info(self.add_submodels, self.identifier, *submodels)
+
         assert all(isinstance(item, Submodel) for item in submodels)
 
         # First, get list of current submodels
@@ -394,6 +427,8 @@ class Simulation(AbstractEntity):
                            "bsi"  - base simulation ID
         :return: created Task or None if error occurred
         """
+        terminal.method_info(self.run, self.identifier, **parameters)
+
         params = {}
         if "exec" in parameters.keys():
             executable = parameters.get("exec")
@@ -423,6 +458,13 @@ class Simulation(AbstractEntity):
             else:
                 params = self.__get_defaults()
 
+        # Modify `parentId` and `parentName` keys
+        # __get_defaults() may return these parameters from another simulation
+        params["parentId"] = self.identifier
+        params["parentName"] = self.name
+
+        terminal.show_info_dict("Run request payload parameters:", params)
+
         response = self._sender.send_run_request(params)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
@@ -437,6 +479,8 @@ class Simulation(AbstractEntity):
         :param base_simulation_id: ID of base simulation for getting defaults
         :return: dictionary containing default task running parameters such as solver, cluster, etc.
         """
+        terminal.method_info(self.__get_defaults, self.identifier, base_simulation_id=base_simulation_id)
+
         if base_simulation_id:
             response = self._sender.send_task_defaults_request(base_simulation_id)
         else:
@@ -529,7 +573,7 @@ class SubmodelType(AbstractEntity):
                     response = self._sender.send_delete_submodel_from_server_request(submodel_id)
                     Timeout.hold_your_horses()
                     self._handler.set_response(response)
-                    deleted_sumbodel_id = self._handler.handle_response_to_delete_submodel_from_server_request()
+                    _ = self._handler.handle_response_to_delete_submodel_from_server_request()
                     terminal.show_warning_message("Duplicates was deleted")
         return submodels
 

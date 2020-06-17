@@ -398,13 +398,15 @@ class WorkFlow(object):
             #   - If `Behaviour` = `Values`,
             #     JSON cannot be passed as input file
 
-            if self.__json_behaviour == "Solving":
+            if self.__json_behaviour == "Solve":
                 terminal.show_info_message("JSON behaviour: Solving. Building workflow graph...")
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
-                terminal.show_info_message("Workflow graph vertices: {}".format(self.__graph.vertices.values()))
+                # terminal.show_info_message("Workflow graph vertices: {}".format(self.__graph.vertices.values()))
+                terminal.show_info_objects("Workflow graph vertices: ", list(self.graph.vertices.values()))
                 self.__graph.build_graph_edges()
-                terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
+                # terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
+                terminal.show_info_objects("Workflow graph edges: ", list(self.graph.edges))
 
             elif self.__json_behaviour == "Update targets":
                 terminal.show_info_message("JSON behaviour: Update targets.")
@@ -434,7 +436,9 @@ class WorkFlow(object):
         Main method of workflow. Run all simulations in graph vertices.
         :return:
         """
-        if self.json_type != "Solving":
+        terminal.method_info(self.run_all_tasks, self.app_session.sid)
+
+        if self.json_type != "Solve":
             raise ValueError("Method `run_all_tasks()` can not be called for JSON of type `{}`".format(self.json_type))
 
         def status_based_behaviour(vertex):
@@ -446,6 +450,7 @@ class WorkFlow(object):
                                      0: current simulation is not done yet, continue
                                      1: current simulation is done
             """
+            terminal.method_info(status_based_behaviour, None, vertex)
             assert isinstance(vertex, Vertex)
             terminal.show_info_message("Processing vertex with ID: {}".format(vertex.identifier))
 
@@ -544,7 +549,7 @@ class WorkFlow(object):
                     rs[i] = r
                     if r == -1:
                         terminal.show_error_message("Failed while processing vertex {}".format(v.identifier))
-                        stop_main_loop = True
+                        # stop_main_loop = True
                         break
                     if r == 1:
                         terminal.show_info_message("Vertex {} done".format(v.identifier))
@@ -564,7 +569,7 @@ class WorkFlow(object):
                         rs[i] = r
                         if r == -1:
                             terminal.show_error_message("Failed while processing vertex {}".format(v.identifier))
-                            stop_main_loop = True
+                            # stop_main_loop = True
                             break
                         if r == 1:
                             terminal.show_info_message("Vertex {} done".format(v.identifier))
@@ -581,6 +586,11 @@ class WorkFlow(object):
                 terminal.show_info_message("Terminating main loop ...")
 
     def change_targets(self):
+        # TODO: To add new targets to workflow graph vertex:
+        #       - obtain loadcase from vertex base simulation
+        #       - use loadcase.add_target() method to add targets one by one for each vertex
+        #       Requests for update existing targets are not implemented yet
+        #       Requests for delete existing targets are not implemented yet
         pass
 
     def collect_values(self):
