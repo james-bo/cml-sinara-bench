@@ -5,6 +5,14 @@ from ui.console import terminal
 from core.dao.local_data_manager import JSONDataManager
 from core.network.timeout import Timeout
 
+# ----------------------------------------------- Supported JSON Types ----------------------------------------------- #
+
+
+class JSONTypes(enum.Enum):
+    SOLVE = "Solve"
+    UPDATE_TARGETS = "Update targets"
+
+
 # -------------------------------------------- Supported JSON Properties --------------------------------------------- #
 
 
@@ -398,7 +406,7 @@ class WorkFlow(object):
             #   - If `Behaviour` = `Values`,
             #     JSON cannot be passed as input file
 
-            if self.__json_behaviour == "Solve":
+            if self.__json_behaviour == JSONTypes.SOLVE.value:
                 terminal.show_info_message("JSON behaviour: Solving. Building workflow graph...")
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
@@ -408,7 +416,7 @@ class WorkFlow(object):
                 # terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
                 terminal.show_info_objects("Workflow graph edges: ", list(self.graph.edges))
 
-            elif self.__json_behaviour == "Update targets":
+            elif self.__json_behaviour == JSONTypes.UPDATE_TARGETS.value:
                 terminal.show_info_message("JSON behaviour: Update targets.")
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
@@ -438,7 +446,7 @@ class WorkFlow(object):
         """
         terminal.method_info(self.run_all_tasks, self.app_session.sid)
 
-        if self.json_type != "Solve":
+        if self.json_type != JSONTypes.SOLVE.value:
             raise ValueError("Method `run_all_tasks()` can not be called for JSON of type `{}`".format(self.json_type))
 
         def status_based_behaviour(vertex):
@@ -591,7 +599,37 @@ class WorkFlow(object):
         #       - use loadcase.add_target() method to add targets one by one for each vertex
         #       Requests for update existing targets are not implemented yet
         #       Requests for delete existing targets are not implemented yet
-        pass
+
+        if self.json_type != JSONTypes.UPDATE_TARGETS.value:
+            raise ValueError("Method `change_targets()` can not be called for JSON of type `{}`".format(self.json_type))
+
+        # Walk over each vertices
+        # Vertex contains information about base simulation
+        # Obtain Loadcase ID from base simulation
+        # Add new targets to this loadcase
+        vertices = list(self.graph.vertices.values())
+        assert all(isinstance(v, Vertex) for v in vertices)
+
+        for v in vertices:
+            base_simulation = v.base_simulation
+            parent_loadcase = base_simulation.get_loadcase()
+            targets = v.targets
+            for t in targets:
+                ans = parent_loadcase.add_target(t.get("name"),
+                                                 t.get("value"),
+                                                 t.get("condition"),
+                                                 t.get("dimension"),
+                                                 t.get("tolerance"),
+                                                 t.get("description"))
+                if ans is not None:
+                    terminal.show_info_message("Successfully added target {} to loadcase {}".format(
+                        ans.identifier,
+                        parent_loadcase.identifier
+                    ))
+                else:
+                    terminal.show_error_message("Failed to add target to loadcase {}".format(
+                        parent_loadcase.identifier
+                    ))
 
     def collect_values(self):
         pass

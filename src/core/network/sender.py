@@ -50,6 +50,11 @@ class Sender(object):
                                             json=payload)
         return response
 
+    def send_remove_loadcase_target_request(self, entity_id, payload):
+        url = "{}/rest/loadcase/{}/targetValue?={}".format(self.__host, entity_id, payload)
+        response = self.__http_session.delete(url)
+        return response
+
 # ----------------------------------------------- Simulation requests ------------------------------------------------ #
 
     def send_clone_simulation_request(self, entity_id, add_to_clipboard=False, dmu_id=None):

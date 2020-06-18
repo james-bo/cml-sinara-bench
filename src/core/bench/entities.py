@@ -454,14 +454,39 @@ class Simulation(AbstractEntity):
         else:
             if "bsi" in parameters.keys():
                 base_simulation_id = parameters.get("bsi")
-                params = self.__get_defaults(base_simulation_id)
+                received_params = self.__get_defaults(base_simulation_id)
             else:
-                params = self.__get_defaults()
+                received_params = self.__get_defaults()
 
-        # Modify `parentId` and `parentName` keys
-        # __get_defaults() may return these parameters from another simulation
-        params["parentId"] = self.identifier
-        params["parentName"] = self.name
+            # Modify `parentId` and `parentName` keys
+            # __get_defaults() may return these parameters from another simulation
+            # remove unnecessary parameters
+            params["objectType"] = received_params.get("objectType")
+            params["parentName"] = self.name
+            params["owner"] = received_params.get("owner")
+            params["ownerId"] = received_params.get("ownerId")
+            params["id"] = received_params.get("id")
+            params["numOfCores"] = received_params.get("numOfCores")
+            params["memory"] = received_params.get("memory")
+            params["storyboard"] = received_params.get("storyboard")
+            params["storyboardId"] = received_params.get("storyboardId")
+            params["solverName"] = received_params.get("solverName")
+            params["solverDisplayName"] = received_params.get("solverDisplayName")
+            params["clusterName"] = received_params.get("clusterName")
+            params["solverGroup"] = received_params.get("solverGroup")
+            params["type"] = received_params.get("type")
+            params["typeDisplayName"] = received_params.get("typeDisplayName")
+            params["solvingType"] = received_params.get("solvingType")
+            params["notified"] = received_params.get("notified")
+            params["startupArguments"] = received_params.get("startupArguments")
+            params["autoCreateReport"] = received_params.get("autoCreateReport")
+            params["withPostprocessing"] = received_params.get("withPostprocessing")
+            params["postprocessorName"] = received_params.get("postprocessorName")
+            params["parentType"] = received_params.get("parentType")
+            params["parentId"] = self.identifier
+            params["cluster"] = received_params.get("cluster")
+            params["clusterId"] = received_params.get("clusterId")
+            params["expectedSolvingTime"] = received_params.get("expectedSolvingTime")
 
         terminal.show_info_dict("Run request payload parameters:", params)
 

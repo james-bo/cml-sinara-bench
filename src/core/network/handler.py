@@ -162,6 +162,18 @@ class Handler(object):
         terminal.show_error_message("There were some errors during adding new target value!")
         return None
 
+    def handle_response_to_remove_loadcase_target_request(self):
+        """
+        Handles response to delete target from loadcase
+        :return: `id` of deleted target or None, if some error occurred
+        """
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, list):
+            target_id = response_json[0].get("id")
+            if target_id:
+                return target_id
+        return None
+
 # ----------------------------------------------- Simulation requests ------------------------------------------------ #
 
     def handle_response_to_clone_simulation_request(self):
