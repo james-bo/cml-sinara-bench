@@ -46,3 +46,14 @@ class JSONDataManager(object):
                     res[key] = val
                 return res
         return None
+
+    @staticmethod
+    def dump_data(data, file):
+        """
+        Writes specified data into .json file
+        :param data: data to be serialized
+        :param file: path to file
+        :return:
+        """
+        with open(file, mode="w") as f:
+            json.dump(data, f, indent=4)

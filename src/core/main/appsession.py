@@ -27,6 +27,16 @@ class AppSession(object):
         else:
             raise ValueError("No JSON file selected")
 
+        if "res" in kwargs.keys():
+            self.__save_results = kwargs.get("res")
+        else:
+            self.__save_results = False
+
+        if "root" in kwargs.keys():
+            self.__root_path = kwargs.get("root")
+        else:
+            raise ValueError("No root path selected")
+
         self.__sid = uuid.uuid1()
 
     @property
@@ -36,6 +46,10 @@ class AppSession(object):
     @property
     def cfg(self):
         return self.__configuration_information
+
+    @property
+    def root(self):
+        return self.__root_path
 
     @property
     def json(self):
@@ -57,6 +71,10 @@ class AppSession(object):
     def credentials(self):
         return self.__key_file
 
+    @property
+    def results(self):
+        return self.__save_results
+
     def execute(self):
         try:
             authorization = Authorization(self)
@@ -65,7 +83,7 @@ class AppSession(object):
             if status:
                 workflow = WorkFlow(self)
                 # God bless this script
-                workflow.run_all_tasks()
+                workflow.process_json()
         except Exception as e:
             import traceback
             print(e)

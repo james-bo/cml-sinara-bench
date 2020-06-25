@@ -22,6 +22,8 @@ def main():
     code = 0
 
     credentials_file = None
+    json_file = None
+    save_results = False
     arguments = argparser.get_arguments()
     if arguments:
         key = arguments.k
@@ -34,6 +36,10 @@ def main():
         else:
             raise ValueError("No JSON file selected!")
 
+        val = arguments.v
+        if val:
+            save_results = True
+
     # TODO: add -r key for restart
     #       after script run, write `lck` file with current time and host name
     #       after AppSession run, append AppSession UID to `lck` file
@@ -44,7 +50,11 @@ def main():
         sys.exit(config_info.status_code)
     else:
         try:
-            app_session = AppSession(cfg=config_info, credentials=credentials_file, json=json_file)
+            app_session = AppSession(root=root_path,
+                                     cfg=config_info,
+                                     credentials=credentials_file,
+                                     json=json_file,
+                                     res=save_results)
             app_session.execute()
         except Exception as e:
             info = str(e)

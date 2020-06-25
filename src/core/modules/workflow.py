@@ -1,4 +1,5 @@
 # coding: utf-8
+import os
 import enum
 import core.bench.entities
 from ui.console import terminal
@@ -11,6 +12,7 @@ from core.network.timeout import Timeout
 class JSONTypes(enum.Enum):
     SOLVE = "Solve"
     UPDATE_TARGETS = "Update targets"
+    VALUES = "Values"
 
 
 # -------------------------------------------- Supported JSON Properties --------------------------------------------- #
@@ -421,6 +423,9 @@ class WorkFlow(object):
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
 
+            else:
+                raise TypeError("Unsupported JSON behaviour")
+
         else:
 
             terminal.show_info_message("Workflow already exists.")
@@ -439,12 +444,29 @@ class WorkFlow(object):
     def json_type(self):
         return self.__json_behaviour
 
-    def run_all_tasks(self):
+    def process_json(self):
         """
-        Main method of workflow. Run all simulations in graph vertices.
+        Processing input JSON file
         :return:
         """
-        terminal.method_info(self.run_all_tasks, self.app_session.sid)
+        if self.json_type == JSONTypes.SOLVE.value:
+            self._run_all_tasks()
+            if self.app_session.results:
+                data = self._collect_values()
+                file = os.path.join(self.app_session.root, "Results.json")
+                JSONDataManager.dump_data(data, file)
+        elif self.json_type == JSONTypes.UPDATE_TARGETS.value:
+            self._change_targets()
+        else:
+            terminal.show_warning_message(f"Cannot process JSON with behaviour: {self.json_type}")
+
+    def _run_all_tasks(self):
+        """
+        Processing input JSON with behaviour `Solve`
+        Run all simulations in graph vertices.
+        :return:
+        """
+        terminal.method_info(self._run_all_tasks, self.app_session.sid)
 
         if self.json_type != JSONTypes.SOLVE.value:
             raise ValueError("Method `run_all_tasks()` can not be called for JSON of type `{}`".format(self.json_type))
@@ -593,12 +615,12 @@ class WorkFlow(object):
             else:
                 terminal.show_info_message("Terminating main loop ...")
 
-    def change_targets(self):
-        # TODO: To add new targets to workflow graph vertex:
-        #       - obtain loadcase from vertex base simulation
-        #       - use loadcase.add_target() method to add targets one by one for each vertex
-        #       Requests for update existing targets are not implemented yet
-        #       Requests for delete existing targets are not implemented yet
+    def _change_targets(self):
+        """
+        Processing input JSON with behaviour `Update targets`
+        Send requests to add new targets
+        :return:
+        """
 
         if self.json_type != JSONTypes.UPDATE_TARGETS.value:
             raise ValueError("Method `change_targets()` can not be called for JSON of type `{}`".format(self.json_type))
@@ -631,8 +653,34 @@ class WorkFlow(object):
                         parent_loadcase.identifier
                     ))
 
-    def collect_values(self):
-        pass
+    def _collect_values(self):
+        """
+        Collect all available key results from all current simulations
+        Vertex status must be `Finished`
+        :return: dictionary with input JSON-like internal structure
+        """
+        output_data = {"Root": {"Behaviour": JSONTypes.VALUES.value,
+                                "LCs": []}}
 
-    def create_dump(self):
+        vertices = list(self.graph.vertices.values())
+        assert all(isinstance(v, Vertex) for v in vertices)
+
+        for v in vertices:
+            if v.status != "Finished":
+                terminal.show_error_message(f"Vertex {v.identifier} status is not \"Finished\"," +
+                                            f"could not collect key results")
+                continue
+
+            values = v.get_values()
+            current_values = [{"name": val.name,
+                               "value": val.value,
+                               "dimension": val.dimension,
+                               "description": val.description} for val in values]
+
+            output_data["Root"]["LCs"].append({"object_id": v.identifier,
+                                               "bench_id": v.base_simulation.get_loadcase().identifier,
+                                               "current_values": current_values})
+        return output_data
+
+    def _create_dump(self):
         pass
