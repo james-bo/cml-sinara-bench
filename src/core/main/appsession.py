@@ -28,9 +28,9 @@ class AppSession(object):
             raise ValueError("No JSON file selected")
 
         if "res" in kwargs.keys():
-            self.__save_results = kwargs.get("res")
+            self.__save_results_path = kwargs.get("res")
         else:
-            self.__save_results = False
+            self.__save_results_path = None
 
         if "root" in kwargs.keys():
             self.__root_path = kwargs.get("root")
@@ -72,8 +72,8 @@ class AppSession(object):
         return self.__key_file
 
     @property
-    def results(self):
-        return self.__save_results
+    def results_path(self):
+        return self.__save_results_path
 
     def execute(self):
         try:

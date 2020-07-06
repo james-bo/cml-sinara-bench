@@ -354,6 +354,22 @@ class Handler(object):
         terminal.show_error_message("Failed to get task status.")
         return None
 
+    def handle_response_to_task_estimations_response(self):
+        """
+        Handles response to task estimations
+        :return: tuple of end waiting and end solving times, or None, if some error occurred
+        """
+        from datetime import datetime
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            task_end_waiting = response_json.get("expectedWaitingEndTime")
+            task_end_solving = response_json.get("expectedSolvingEndTime")
+            if task_end_waiting and task_end_solving:
+                return (str(datetime.fromtimestamp(task_end_waiting // 1000)),
+                        str(datetime.fromtimestamp(task_end_solving // 1000)))
+        terminal.show_error_message("Failed to get task estimations.")
+        return None, None
+
 # ------------------------------------------------ Submodel requests ------------------------------------------------- #
 
     def handle_response_to_upload_submodel_request(self):

@@ -126,7 +126,7 @@ class Sender(object):
 
 # -------------------------------------------------- Task requests --------------------------------------------------- #
 
-    def send_task_status_request(self, entity_id):
+    def send_task_info_request(self, entity_id):
         from core.bench.entities import EntityTypes
         return self.send_entity_base_info_request(entity_id, EntityTypes.TASK.value)
 

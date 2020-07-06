@@ -529,13 +529,23 @@ class Task(AbstractEntity):
 
     def get_status(self):
         """
-        :return: return current task status, or None, if error occurred
+        :return: current task status, or None, if error occurred
         """
-        response = self._sender.send_task_status_request(self.identifier)
+        response = self._sender.send_task_info_request(self.identifier)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
         task_status = self._handler.handle_response_to_task_status_response()
         return task_status
+
+    def get_time_estimation(self):
+        """
+        :return: tuple of string representation of end waiting and end solving time, or (None, None) if error occurred
+        """
+        response = self._sender.send_task_info_request(self.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        task_end_waiting, task_end_solving = self._handler.handle_response_to_task_estimations_response()
+        return task_end_waiting, task_end_solving
 
 # -------------------------------------------------- S|Type Object --------------------------------------------------- #
 

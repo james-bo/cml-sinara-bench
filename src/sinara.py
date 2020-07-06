@@ -34,11 +34,14 @@ def main():
         if json:
             json_file = os.path.abspath(json)
         else:
-            raise ValueError("No JSON file selected!")
+            terminal.show_error_message("No JSON file selected!")
+            sys.exit(1)
 
-        val = arguments.v
-        if val:
-            save_results = True
+        values_dir = arguments.v
+        if values_dir:
+            save_results = os.path.abspath(values_dir)
+        else:
+            save_results = None
 
     # TODO: add -r key for restart
     #       after script run, write `lck` file with current time and host name
@@ -64,9 +67,12 @@ def main():
             info = "Finished."
             code = 0
         finally:
-            print(info)
-            if trace:
-                print(trace)
+            if code == 0:
+                terminal.show_info_message(info)
+            else:
+                terminal.show_error_message(info)
+                if trace:
+                    terminal.show_error_message(trace)
             sys.exit(code)
 
 
