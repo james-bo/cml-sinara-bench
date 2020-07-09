@@ -119,13 +119,14 @@ class Loadcase(AbstractEntity):
         if targets_data_list:
             targets = []
             for target_data in targets_data_list:
-                targets.append([Target(target_data)])
+                targets.append(Target(target_data))
             return targets
         return None
 
     def add_target(self, name, value, condition, dimension, tolerance=None, description=None):
         """
-        Adds new target to loadcase
+        Adds new target to loadcase.
+        If target with same name already exists, deletes old target and adds new.
         :param name: target name
         :param value: target value
         :param condition: target condition: 1 - >, 2 - <, 3 - +/-
@@ -174,11 +175,45 @@ class Loadcase(AbstractEntity):
                    "value": value}
         response = self._sender.send_add_loadcase_target_request(self.identifier, payload)
         Timeout.hold_your_horses()
+
+        # if no target with that name exists, create new
+        # else, need to find ID of target by name
+        # delete it
+        # and create new
+        if response.status_code != 200:
+            terminal.show_warning_message("Target with such name already exists")
+            existing_targets = self.get_targets()
+            for t in existing_targets:
+                if t.name == name:
+                    tid = self.delete_target(t)
+                    if tid is not None:
+                        terminal.show_info_message("Old target successfully removed")
+                    else:
+                        terminal.show_error_message("Failed removing old target")
+                        return None
+                    break
+            response = self._sender.send_add_loadcase_target_request(self.identifier, payload)
+
+        terminal.show_info_message("Adding new target...")
         self._handler.set_response(response)
         target_data = self._handler.handle_response_to_add_loadcase_target_request()
+
         if target_data:
             return Target(target_data)
         return None
+
+    def delete_target(self, target):
+        """
+        Removes target from loadcase
+        :param target: Target object
+        :return: removed target ID or None, if some error occurred
+        """
+        assert isinstance(target, Target)
+        response = self._sender.send_remove_loadcase_target_request(self.identifier, target.identifier)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        target_id = self._handler.handle_response_to_remove_loadcase_target_request()
+        return target_id
 
 # ------------------------------------------------- Loadcase Target -------------------------------------------------- #
 
@@ -488,7 +523,7 @@ class Simulation(AbstractEntity):
             params["clusterId"] = received_params.get("clusterId")
             params["expectedSolvingTime"] = received_params.get("expectedSolvingTime")
 
-        terminal.show_info_dict("Run request payload parameters:", params)
+        # terminal.show_info_dict("Run request payload parameters:", params)
 
         response = self._sender.send_run_request(params)
         Timeout.hold_your_horses()
