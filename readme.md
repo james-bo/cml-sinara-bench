@@ -1,16 +1,18 @@
 # CML Sinara Bench
 
-Program version: 0.5
+Program version: 0.6
 
-Date: 06/07/2020
+Date: 12/07/2020
 
 Language version: Python 3.7
 
 Current usage:
-* `python sinara.py -h` - shows help message
-* `python sinara.py -j <path_to_JSON_file>`
-* `python sinara.py -k -j <path_to_JSON_file>` - if there is a file with username and password in `./cfg` directory
-* `python sinara.py -v <path_to_folder> -j <path_to_JSON_file>` - if JSON is of type "Solve", writes all simulations key results into output file `results.json` in selected folder
+* `python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]`
+  * `-h` shows help message and exit
+  * `-j` select JSON (**mandatory argument**)
+  * `-k` if there is a file with username and password in `./cfg` directory
+  * `-v` if JSON is of type *Solve* writes all simulation key results into output file `results.json` in selected directory
+  * `-d` shows additional debug information in terminal
 
 ## Examples of input and output JSON files
 

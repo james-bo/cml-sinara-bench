@@ -548,7 +548,7 @@ class WorkFlow(object):
 
             # if status is "Failed",
             #   - terminate main loop
-            elif vertex.status == "Failed":
+            elif vertex.status in ["Failed", "failed", "Error", "error"]:
                 terminal.show_warning_message(f"Vertex status: {vertex.status}")
                 return -1
 
