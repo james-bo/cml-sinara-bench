@@ -1,18 +1,23 @@
 # CML Sinara Bench
 
-Program version: 0.6
+## Description
+* Program version: 0.6
+* Date: 12/07/2020
 
-Date: 12/07/2020
+## Run
+```shell script
+python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]
+```
+* `-h` shows help message and exit
+* `-j` select JSON (**mandatory argument**)
+* `-k` if there is a file with username and password in `./cfg` directory
+* `-v` if JSON is of type *Solve* writes all simulation key results into output file `results.json` in selected directory
+* `-d` shows additional debug information in terminal
 
-Language version: Python 3.7
-
-Current usage:
-* `python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]`
-  * `-h` shows help message and exit
-  * `-j` select JSON (**mandatory argument**)
-  * `-k` if there is a file with username and password in `./cfg` directory
-  * `-v` if JSON is of type *Solve* writes all simulation key results into output file `results.json` in selected directory
-  * `-d` shows additional debug information in terminal
+## Dependencies
+* [`python 3.7+`](https://www.python.org/downloads/)
+* [`requests`](https://requests.readthedocs.io/en/master/user/install/#install)
+* [`colorama`](https://pypi.org/project/colorama/)
 
 ## Examples of input and output JSON files
 

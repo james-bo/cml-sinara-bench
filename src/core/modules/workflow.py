@@ -569,10 +569,6 @@ class WorkFlow(object):
         # --- main section --- main section --- main section --- main section --- main section --- main section ---
         stop_main_loop = False
 
-        # initiate list for saving loop results
-        # rs = [0 for _ in range(len(self.graph.vertices))]
-        # rs = {key: 0 for key in self.graph.vertices}
-
         # list of graph vertices to iterate over it with possibility to modify it
         vertices = list(self.graph.vertices.values())
         assert all(isinstance(v, Vertex) for v in vertices)
@@ -597,7 +593,6 @@ class WorkFlow(object):
                     terminal.show_info_message(f"Vertex {v.identifier} has no linked vertices")
                     r = status_based_behaviour(v)
                     terminal.show_info_message(f"Current vertex result status: {r}")
-                    # rs[i] = r
                     rs[v.identifier] = r
                     # terminal.show_info_message(f"Current state of the list of vertices results status: {str(rs)}")
                     if r == -1:
@@ -620,7 +615,6 @@ class WorkFlow(object):
                         terminal.show_info_message("All linked vertices successfully finished")
                         r = status_based_behaviour(v)
                         terminal.show_info_message(f"Current vertex result status: {r}")
-                        # rs[i] = r
                         rs[v.identifier] = r
                         # terminal.show_info_message(f"Current state of the list of vertices results status: {str(rs)}")
                         if r == -1:
@@ -700,7 +694,6 @@ class WorkFlow(object):
                                             f"could not collect key results")
                 continue
 
-            # values = v.get_values()
             values = v.current_simulation.get_values()
             current_values = [{"name": val.name,
                                "value": val.value,
