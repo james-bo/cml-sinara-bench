@@ -43,6 +43,10 @@ def main():
         else:
             save_results = None
 
+        add_dsp = arguments.d
+        if add_dsp:
+            terminal.set_output_type(2)
+
     # TODO: add -r key for restart
     #       after script run, write `lck` file with current time and host name
     #       after AppSession run, append AppSession UID to `lck` file

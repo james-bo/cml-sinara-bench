@@ -6,6 +6,24 @@ import colorama
 colorama.init()
 
 
+class Output:
+    REQUESTS = False
+    FULL = False
+
+
+def set_output_type(num):
+    if isinstance(num, int):
+        if num == 1:
+            Output.REQUESTS = True
+            Output.FULL = False
+        if num == 2:
+            Output.REQUESTS = True
+            Output.FULL = True
+        else:
+            Output.REQUESTS = False
+            Output.FULL = False
+
+
 def request_string_input(message=None):
     if message:
         return input(message + ": ")
@@ -46,21 +64,29 @@ def show_error_message(message):
 
 
 def show_get_request(url):
-    print(f"{colorama.Fore.GREEN}GET     > {url}{colorama.Style.RESET_ALL}")
+    if Output.REQUESTS:
+        print(f"{colorama.Fore.GREEN}GET     > {url}{colorama.Style.RESET_ALL}")
 
 
 def show_post_request(url):
-    print(f"{colorama.Fore.GREEN}POST    > {url}{colorama.Style.RESET_ALL}")
+    if Output.REQUESTS:
+        print(f"{colorama.Fore.GREEN}POST    > {url}{colorama.Style.RESET_ALL}")
+
+
+def show_delete_request(url):
+    if Output.REQUESTS:
+        print(f"{colorama.Fore.GREEN}DELETE  > {url}{colorama.Style.RESET_ALL}")
 
 
 def method_info(func, obj_id, *args, **kwargs):
-    print(f"{colorama.Fore.MAGENTA}", end='')
-    print(f"Object ID: {obj_id}")
-    print(f"Function called: {func.__qualname__}")
-    print("Input args: ")
-    for arg in args:
-        print(f"... {str(arg)}")
-    print("Input kwargs: ")
-    for kwarg in kwargs:
-        print(f"... {str(kwarg)} -> {str(kwargs.get(kwarg))}")
-    print(f"{colorama.Style.RESET_ALL}")
+    if Output.FULL:
+        print(f"{colorama.Fore.MAGENTA}", end='')
+        print(f"Object ID: {obj_id}")
+        print(f"Function called: {func.__qualname__}")
+        print("Input args: ")
+        for arg in args:
+            print(f"... {str(arg)}")
+        print("Input kwargs: ")
+        for kwarg in kwargs:
+            print(f"... {str(kwarg)} -> {str(kwargs.get(kwarg))}")
+        print(f"{colorama.Style.RESET_ALL}")
