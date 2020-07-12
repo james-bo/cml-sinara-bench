@@ -43,6 +43,7 @@ class Sender(object):
                                                   "sort": [],
                                                   "pageable": {"size": max_number,
                                                                "page": 1}})
+        return response
 
     def send_add_loadcase_target_request(self, entity_id, payload):
         url = "{}/rest/loadcase/{}/targetValue".format(self.__host, entity_id)
@@ -51,7 +52,7 @@ class Sender(object):
         return response
 
     def send_remove_loadcase_target_request(self, entity_id, payload):
-        url = "{}/rest/loadcase/{}/targetValue?={}".format(self.__host, entity_id, payload)
+        url = "{}/rest/loadcase/{}/targetValue?ids={}".format(self.__host, entity_id, payload)
         response = self.__http_session.delete(url)
         return response
 

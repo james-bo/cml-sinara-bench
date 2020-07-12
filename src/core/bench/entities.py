@@ -148,6 +148,9 @@ class Loadcase(AbstractEntity):
             terminal.show_error_message("Unsupported condition for new target: {}".format(condition))
             return None
 
+        if condition != 3:
+            tolerance = None
+
         if tolerance is None:
             has_tolerance = False
         else:
@@ -180,8 +183,8 @@ class Loadcase(AbstractEntity):
         # else, need to find ID of target by name
         # delete it
         # and create new
-        if response.status_code != 200:
-            terminal.show_warning_message("Target with such name already exists")
+        if response.status_code == 400:
+            terminal.show_warning_message(response.json().get("message"))
             existing_targets = self.get_targets()
             for t in existing_targets:
                 if t.name == name:
@@ -193,6 +196,11 @@ class Loadcase(AbstractEntity):
                         return None
                     break
             response = self._sender.send_add_loadcase_target_request(self.identifier, payload)
+
+        if response.status_code != 200:
+            terminal.show_error_message("Failed adding new target")
+            terminal.show_error_message(f"Response: {response.status_code}")
+            return None
 
         terminal.show_info_message("Adding new target...")
         self._handler.set_response(response)
@@ -208,6 +216,8 @@ class Loadcase(AbstractEntity):
         :param target: Target object
         :return: removed target ID or None, if some error occurred
         """
+        terminal.method_info(self.delete_target, self.identifier, target)
+
         assert isinstance(target, Target)
         response = self._sender.send_remove_loadcase_target_request(self.identifier, target.identifier)
         Timeout.hold_your_horses()
