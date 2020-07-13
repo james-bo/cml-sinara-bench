@@ -503,6 +503,10 @@ class Simulation(AbstractEntity):
             else:
                 received_params = self.__get_defaults()
 
+            if received_params is None:
+                terminal.show_error_message("Failed to run simulation")
+                return None
+
             # Modify `parentId` and `parentName` keys
             # __get_defaults() may return these parameters from another simulation
             # remove unnecessary parameters

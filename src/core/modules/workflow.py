@@ -19,18 +19,33 @@ class JSONTypes(enum.Enum):
 
 
 class JSONProps(enum.Enum):
-    VERTEX_ID = "object_id"
+    # TODO: change name of property "bench_id" to "curr_simulation_id"
+    #       change name of property "object_id" to "vertex_id"
+    #       change name of property "task_id" to "curr_task_id"
+    #       change name of property "task_status" to "curr_task_status"
+    #       change name of property "storyboard" to "storyboard_id"
+    #       change name of property "current_values" to "values"
+    #       add property "loadcase_id"
+
+    VERTEX_ID = "vertex_id"
+    # VERTEX_ID = "object_id"
+    LOADCASE_ID = "loadcase_id"
     BASE_SIMULATION_ID = "base_simulation_id"
-    CURR_SIMULATION_ID = "bench_id"
-    CURR_TASK_ID = "task_id"
-    VERTEX_STATUS = "task_status"
+    CURR_SIMULATION_ID = "curr_simulation_id"
+    # CURR_SIMULATION_ID = "bench_id"
+    CURR_TASK_ID = "curr_task_id"
+    # CURR_TASK_ID = "task_id"
+    VERTEX_STATUS = "curr_task_status"
+    # VERTEX_STATUS = "task_status"
     SOLVER = "solver"
-    STORYBOARD = "storyboard"
+    STORYBOARD = "storyboard_id"
+    # STORYBOARD = "storyboard"
     SUBMODELS = "submodels"
     RESULTS = "results"
     PARENTS = "parents"
     TARGETS = "targets"
-    VALUES = "current_values"
+    VALUES = "values"
+    # VALUES = "current_values"
 
 # --------------------------------------------------- Graph Vertex --------------------------------------------------- #
 
@@ -412,10 +427,8 @@ class WorkFlow(object):
                 terminal.show_info_message("JSON behaviour: Solving. Building workflow graph...")
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
-                # terminal.show_info_message("Workflow graph vertices: {}".format(self.__graph.vertices.values()))
                 terminal.show_info_objects("Workflow graph vertices: ", list(self.graph.vertices.values()))
                 self.__graph.build_graph_edges()
-                # terminal.show_info_message("Workflow graph edges: {}".format(self.__graph.edges))
                 terminal.show_info_objects("Workflow graph edges: ", list(self.graph.edges))
 
             elif self.__json_behaviour == JSONTypes.UPDATE_TARGETS.value:
@@ -453,7 +466,6 @@ class WorkFlow(object):
             self._run_all_tasks()
             if self.app_session.results_path is not None:
                 # try to create directory
-                # dir_path = os.path.abspath(os.path.dirname(self.app_session.results_path))
                 dir_path = os.path.abspath(self.app_session.results_path)
                 terminal.show_info_message(f"Trying to save key results to: {dir_path}")
                 try:

@@ -21,54 +21,65 @@ python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]
 
 ## Examples of input and output JSON files
 
-### Type "Solve"
+### JSON properties description
+|Property            |Type               |Description                                                                                                                             |
+|--------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+|`vertex_id`         |*int*              |Unique identifier of object in JSON file                                                                                                |
+|`loadcase_id`       |*int* &#x7c; *null*|Loadcase ID from CML-Bench, or *null*, if unknown. In this case Loadcase ID will be restored from the base simulation                   |
+|`base_simulation_id`|*int*              |Base simulation ID from CML-Bench                                                                                                       |
+|`curr_simulation_id`|*int* &#x7c; *null*|Current simulation ID from CML-Bench, or *null*, if unknown (for new tasks)                                                             |
+|`curr_task_id`      |*int* &#x7c; *null*|Current task ID from CML-Bench, or *null*, if unknown (for new tasks)                                                                   |
+|`curr_task_status`  |*str*              |Task status of current simulation. For the first time must be *"New"*                                                                   |
+|`solver`            |*str* &#x7c; *null*|Solver name, or *null*, if unknown. In this case value obtained from the base simulation will be used                                   |
+|`storyboard`        |*int* &#x7c; *null*|Storyboard ID from CML-Bench, or *null* if unknown. In this case value obtained from the base simulation will be used                   |
+|`submodels`         |*list<str>*        |List of submodels' basenames. Files must be placed into *Local storage* specified in `src/cfg/config.cfg` directory                     |
+|`results`           |*list<str>*        |List of simulation result files which should be downloaded for further usage                                                            |
+|`parents`           |*list<int>*        |List of IDs of parent objects, which task statuses must be *Finished* to allow current object to start processing                       |
+|`targets`           |*list<obj>*        |List of objects with properties `name`, `value`, `condition`, `dimension`, `tolerance`, `description` describing Target CML-Bench object|
+|`values`            |*list<obj>*        |List of objects with properties `name`, `value`, `dimension`, `description` describing Value CML-Bench object                           |
+
+### Type *Solve*
 Main type of user input file. Used for start calculations of selected simulations.
 ```json
 {
-  "Root": {
-    "Behaviour": "Solve",
-    "LCs": [
-      {
-        "object_id": 1,
-        "bench_id": null,
-        "task_id": null,
-        "task_status": "New",
-        "solver": null,
-        "storyboard": null,
-        "base_simulation_id": 699033,
-        "submodels": [
-          "In_Loco v.04.01.csv"
-        ],
-        "results": [
-        ],
-        "parents": [
+    "Root": {
+        "Behaviour": "Solve",
+        "LCs": [
+            {
+                "vertex_id": 1,
+                "loadcase_id": null,
+                "base_simulation_id": 699033,
+                "curr_task_status": "New",
+                "solver": null,
+                "storyboard": null,
+                "submodels": [
+                    "In_Loco v.04.01.csv"
+                ],
+                "results": [],
+                "parents": []
+            },
+            {
+                "vertex_id": 2,
+                "loadcase_id": null,
+                "base_simulation_id": 695587,
+                "curr_task_status": "New",
+                "solver": null,
+                "storyboard": null,
+                "submodels": [
+                    "Material.dat",
+                    "Property.dat",
+                    "shveller.dat"
+                ],
+                "results": [
+                    "start.f06",
+                    "start.op2"
+                ],
+                "parents": [
+                    1
+                ]
+            }
         ]
-      },
-      {
-        "object_id": 2,
-        "bench_id": null,
-        "task_id": null,
-        "task_status": "New",
-        "solver": null,
-        "storyboard": null,
-        "base_simulation_id": 695587,
-        "target_value": null,
-        "target_condition": null,
-        "submodels": [
-          "Material.dat",
-          "Property.dat",
-          "shveller.dat"
-        ],
-        "results": [
-          "start.f06",
-          "start.op2"
-        ],
-        "parents": [
-          1
-        ]
-      }
-    ]
-  }
+    }
 }
 ```
 
@@ -76,47 +87,45 @@ Main type of user input file. Used for start calculations of selected simulation
 User input file using for add target values to specified loadcases.
 ```json
 {
-  "Root": {
-    "Behaviour": "Update targets",
-    "LCs": [
-      {
-        "object_id": 1,
-        "bench_id": null,
-        "base_simulation_id": 699033,
-        "targets": [{"name": "",
-                     "value": 100.0,
-                     "condition": 1,
-                     "dimension": "mm",
-                     "tolerance": null,
-                     "description": null},
-                    {"name": "",
-                     "value": 200.0,
-                     "condition": 2,
-                     "dimension": "mm",
-                     "tolerance": null,
-                     "description": null}],
-        "current_values": []
-      },
-      {
-        "object_id": 2,
-        "bench_id": null,
-        "base_simulation_id": 695587,
-        "targets": [{"name": "",
-                     "value": 300.0,
-                     "condition": 2,
-                     "dimension": "MPa",
-                     "tolerance": null,
-                     "description": null},
-                    {"name": "",
-                     "value": 400.0,
-                     "condition": 1,
-                     "dimension": "MPa",
-                     "tolerance": null,
-                     "description": null}],
-        "current_values": []
-      }
-    ]
-  }
+    "Root": {
+        "Behaviour": "Update targets",
+        "LCs": [
+            {
+                "object_id": 1,
+                "loadcase_id": null,
+                "base_simulation_id": 699033,
+                "targets": [{"name": "",
+                             "value": 100.0,
+                             "condition": 1,
+                             "dimension": "mm",
+                             "tolerance": null,
+                             "description": null},
+                            {"name": "",
+                             "value": 200.0,
+                             "condition": 2,
+                             "dimension": "mm",
+                             "tolerance": null,
+                             "description": null}]
+            },
+            {
+                "object_id": 2,
+                "loadcase_id": null,
+                "base_simulation_id": 695587,
+                "targets": [{"name": "",
+                             "value": 300.0,
+                             "condition": 2,
+                             "dimension": "MPa",
+                             "tolerance": null,
+                             "description": null},
+                            {"name": "",
+                             "value": 400.0,
+                             "condition": 1,
+                             "dimension": "MPa",
+                             "tolerance": null,
+                             "description": null}]
+            }
+        ]
+    }
 }
 ```
 
@@ -124,13 +133,13 @@ User input file using for add target values to specified loadcases.
 Output file with key results.
 ```json
 {
-  "Root": {
-    "Behaviour": "Values",
-    "LCs": [
-      {
-        "object_id": 1,
-        "bench_id": null,
-        "current_values": [{"name": "abc",
+    "Root": {
+        "Behaviour": "Values",
+        "LCs": [
+            {
+                "object_id": 1,
+                "loadcase_id": null,
+                "values": [{"name": "abc",
                             "value": 123.0,
                             "dimension": "mm",
                             "description": null}, 
@@ -138,11 +147,11 @@ Output file with key results.
                             "value": 198.0,
                             "dimension": "mm",
                             "description": null}]
-      },
-      {
-        "object_id": 2,
-        "bench_id": null,
-        "current_values": [{"name": "hig",
+            },
+            {
+                "object_id": 2,
+                "loadcase_id": null,
+                "values": [{"name": "hig",
                             "value": 298.0,
                             "dimension": "MPa",
                             "description": null}, 
@@ -150,8 +159,8 @@ Output file with key results.
                             "value": 512.0,
                             "dimension": "MPa",
                             "description": null}]
-      }
-    ]
-  }
+            }
+        ]
+    }
 }
 ```
