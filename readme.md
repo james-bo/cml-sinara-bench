@@ -83,7 +83,7 @@ Main type of user input file. Used for start calculations of selected simulation
 }
 ```
 
-### Type "Update targets"
+### Type *Update targets*
 User input file using for add target values to specified loadcases.
 ```json
 {
@@ -91,7 +91,7 @@ User input file using for add target values to specified loadcases.
         "Behaviour": "Update targets",
         "LCs": [
             {
-                "object_id": 1,
+                "vertex_id": 1,
                 "loadcase_id": null,
                 "base_simulation_id": 699033,
                 "targets": [{"name": "",
@@ -108,7 +108,7 @@ User input file using for add target values to specified loadcases.
                              "description": null}]
             },
             {
-                "object_id": 2,
+                "vertex_id": 2,
                 "loadcase_id": null,
                 "base_simulation_id": 695587,
                 "targets": [{"name": "",
@@ -129,7 +129,7 @@ User input file using for add target values to specified loadcases.
 }
 ```
 
-### Type "Values"
+### Type *Values*
 Output file with key results.
 ```json
 {
@@ -137,7 +137,7 @@ Output file with key results.
         "Behaviour": "Values",
         "LCs": [
             {
-                "object_id": 1,
+                "vertex_id": 1,
                 "loadcase_id": null,
                 "values": [{"name": "abc",
                             "value": 123.0,
@@ -149,7 +149,7 @@ Output file with key results.
                             "description": null}]
             },
             {
-                "object_id": 2,
+                "vertex_id": 2,
                 "loadcase_id": null,
                 "values": [{"name": "hig",
                             "value": 298.0,
