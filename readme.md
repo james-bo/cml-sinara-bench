@@ -6,7 +6,7 @@
 
 ## Run
 ```shell script
-python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]
+python sinara.py [-h] -j $path_to_JSON_file [-k] [-v $path_to_folder] [-d]
 ```
 * `-h` shows help message and exit
 * `-j` select JSON (**mandatory argument**)
@@ -32,11 +32,11 @@ python sinara.py [-h] -j <path_to_JSON_file> [-k] [-v <path_to_folder>] [-d]
 |`curr_task_status`  |*str*              |Task status of current simulation. For the first time must be *"New"*                                                                   |
 |`solver`            |*str* &#x7c; *null*|Solver name, or *null*, if unknown. In this case value obtained from the base simulation will be used                                   |
 |`storyboard`        |*int* &#x7c; *null*|Storyboard ID from CML-Bench, or *null* if unknown. In this case value obtained from the base simulation will be used                   |
-|`submodels`         |*list<str>*        |List of submodels' basenames. Files must be placed into *Local storage* specified in `src/cfg/config.cfg` directory                     |
-|`results`           |*list<str>*        |List of simulation result files which should be downloaded for further usage                                                            |
-|`parents`           |*list<int>*        |List of IDs of parent objects, which task statuses must be *Finished* to allow current object to start processing                       |
-|`targets`           |*list<obj>*        |List of objects with properties `name`, `value`, `condition`, `dimension`, `tolerance`, `description` describing Target CML-Bench object|
-|`values`            |*list<obj>*        |List of objects with properties `name`, `value`, `dimension`, `description` describing Value CML-Bench object                           |
+|`submodels`         |*list&lt;str&gt;*  |List of submodels' basenames. Files must be placed into *Local storage* specified in `src/cfg/config.cfg` directory                     |
+|`results`           |*list&lt;str&gt;*  |List of simulation result files which should be downloaded for further usage                                                            |
+|`parents`           |*list&lt;int&gt;*  |List of IDs of parent objects, which task statuses must be *Finished* to allow current object to start processing                       |
+|`targets`           |*list&lt;obj&gt;*  |List of objects with properties `name`, `value`, `condition`, `dimension`, `tolerance`, `description` describing Target CML-Bench object|
+|`values`            |*list&lt;obj&gt;*  |List of objects with properties `name`, `value`, `dimension`, `description` describing Value CML-Bench object                           |
 
 ### Type *Solve*
 Main type of user input file. Used for start calculations of selected simulations.
@@ -47,32 +47,31 @@ Main type of user input file. Used for start calculations of selected simulation
         "LCs": [
             {
                 "vertex_id": 1,
-                "loadcase_id": null,
-                "base_simulation_id": 699033,
+                "loadcase_id": 691356,
+                "base_simulation_id": 715467,
                 "curr_task_status": "New",
                 "solver": null,
                 "storyboard": null,
                 "submodels": [
-                    "In_Loco v.04.01.csv"
+                    "05192020_In_Loco.csv"
                 ],
-                "results": [],
+                "results": [
+                    "In_Bearing_Out_Solution.xlsx"
+                ],
                 "parents": []
             },
             {
                 "vertex_id": 2,
-                "loadcase_id": null,
-                "base_simulation_id": 695587,
+                "loadcase_id": 724312,
+                "base_simulation_id": 724316,
                 "curr_task_status": "New",
                 "solver": null,
                 "storyboard": null,
                 "submodels": [
-                    "Material.dat",
-                    "Property.dat",
-                    "shveller.dat"
+                    "05192020_In_Loco.csv"
                 ],
                 "results": [
-                    "start.f06",
-                    "start.op2"
+                    "In_Bearing_Out_Solution.xlsx"
                 ],
                 "parents": [
                     1
@@ -92,37 +91,49 @@ User input file using for add target values to specified loadcases.
         "LCs": [
             {
                 "vertex_id": 1,
-                "loadcase_id": null,
-                "base_simulation_id": 699033,
-                "targets": [{"name": "",
-                             "value": 100.0,
-                             "condition": 1,
-                             "dimension": "mm",
-                             "tolerance": null,
-                             "description": null},
-                            {"name": "",
-                             "value": 200.0,
-                             "condition": 2,
-                             "dimension": "mm",
-                             "tolerance": null,
-                             "description": null}]
+                "loadcase_id": 691356,
+                "base_simulation_id": 715467,
+                "targets": [
+                    {
+                        "name": "L1 Тестовый",
+                        "value": 3000000.0,
+                        "condition": 1,
+                        "dimension": "км",
+                        "tolerance": null,
+                        "description": "Расчетный ресурс подшипника"
+                    },
+                    {
+                        "name": "L1 ISO Тестовый",
+                        "value": 3000000,
+                        "condition": 1,
+                        "dimension": "км",
+                        "tolerance": null,
+                        "description": "Расчетный ресурс подшипника"
+                    }
+                ]
             },
             {
                 "vertex_id": 2,
-                "loadcase_id": null,
-                "base_simulation_id": 695587,
-                "targets": [{"name": "",
-                             "value": 300.0,
-                             "condition": 2,
-                             "dimension": "MPa",
-                             "tolerance": null,
-                             "description": null},
-                            {"name": "",
-                             "value": 400.0,
-                             "condition": 1,
-                             "dimension": "MPa",
-                             "tolerance": null,
-                             "description": null}]
+                "loadcase_id": 724312,
+                "base_simulation_id": 724316,
+                "targets": [
+                    {
+                        "name": "L1 Тестовый",
+                        "value": 3000000.0,
+                        "condition": 1,
+                        "dimension": "км",
+                        "tolerance": null,
+                        "description": "Расчетный ресурс подшипника"
+                    },
+                    {
+                        "name": "L1 ISO Тестовый",
+                        "value": 3000000,
+                        "condition": 1,
+                        "dimension": "км",
+                        "tolerance": null,
+                        "description": "Расчетный ресурс подшипника"
+                    }
+                ]
             }
         ]
     }
@@ -138,29 +149,57 @@ Output file with key results.
         "LCs": [
             {
                 "vertex_id": 1,
-                "loadcase_id": null,
-                "values": [{"name": "abc",
-                            "value": 123.0,
-                            "dimension": "mm",
-                            "description": null}, 
-                           {"name": "def",
-                            "value": 198.0,
-                            "dimension": "mm",
-                            "description": null}]
+                "loadcase_id": 691356,
+                "values": [
+                    {
+                        "name": "L1iso",
+                        "value": "3169829.14142267",
+                        "dimension": "",
+                        "description": ""
+                    },
+                    {
+                        "name": "L1",
+                        "value": "3085763.49323079",
+                        "dimension": "",
+                        "description": ""
+                    }
+                ]
             },
             {
                 "vertex_id": 2,
-                "loadcase_id": null,
-                "values": [{"name": "hig",
-                            "value": 298.0,
-                            "dimension": "MPa",
-                            "description": null}, 
-                           {"name": "klm",
-                            "value": 512.0,
-                            "dimension": "MPa",
-                            "description": null}]
+                "loadcase_id": 724312,
+                "values": [
+                    {
+                        "name": "L2iso",
+                        "value": "2859507.52350189",
+                        "dimension": "",
+                        "description": ""
+                    },
+                    {
+                        "name": "L2",
+                        "value": "1154161.06941917",
+                        "dimension": "",
+                        "description": ""
+                    },
+                    {
+                        "name": "L1iso",
+                        "value": "3583420.74003418",
+                        "dimension": "",
+                        "description": ""
+                    },
+                    {
+                        "name": "L1",
+                        "value": "1373667.31125683",
+                        "dimension": "",
+                        "description": ""
+                    }
+                ]
             }
         ]
     }
 }
 ```
+
+## Authors
+* @james-bo
+* @univang

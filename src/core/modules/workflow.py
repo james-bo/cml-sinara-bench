@@ -368,7 +368,7 @@ class Graph(object):
         """
         assert isinstance(data, dict)
         vertex = Vertex(self.app_session, data)
-        key = data.get("object_id")
+        key = data.get(JSONProps.VERTEX_ID.value)
         self.__vertices[key] = vertex
 
     def build_graph_edges(self):
@@ -388,7 +388,7 @@ class Graph(object):
 
 class WorkFlow(object):
 
-    WALK_INTERVAL = 60  # 1 minute
+    WALK_INTERVAL = 10  # 10 seconds
 
     __instance = None
 
@@ -712,9 +712,9 @@ class WorkFlow(object):
                                "dimension": val.dimension,
                                "description": val.description} for val in values]
 
-            output_data["Root"]["LCs"].append({"object_id": v.identifier,
-                                               "bench_id": v.base_simulation.get_loadcase().identifier,
-                                               "current_values": current_values})
+            output_data["Root"]["LCs"].append({JSONProps.VERTEX_ID.value: v.identifier,
+                                               JSONProps.LOADCASE_ID.value: v.base_simulation.get_loadcase().identifier,
+                                               JSONProps.VALUES.value: current_values})
         return output_data
 
     def _create_dump(self):

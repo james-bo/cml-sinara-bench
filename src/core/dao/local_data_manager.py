@@ -1,5 +1,6 @@
 # coding: utf-8
 import json
+import core.modules.workflow
 
 
 class JSONDataManager(object):
@@ -41,7 +42,7 @@ class JSONDataManager(object):
                 assert isinstance(lcs, list)
                 for item in lcs:
                     assert isinstance(item, dict)
-                    key = item.get("object_id")
+                    key = item.get(core.modules.workflow.JSONProps.VERTEX_ID.value)
                     val = item
                     res[key] = val
                 return res
