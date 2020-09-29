@@ -11,6 +11,17 @@ class Handler(object):
     def set_response(self, response):
         self.__response = response
 
+# ----------------------------------------------- Healthcheck requests ----------------------------------------------- #
+
+    def handle_response_to_healthcheck_request(self):
+        response_json = self.__response.json()
+        if response_json is not None and isinstance(response_json, dict):
+            version = response_json.get("message")
+            status = response_json.get("status")
+            if status is not None and version is not None:
+                return version, status
+        return None
+
 # ---------------------------------------------- Authorization requests ---------------------------------------------- #
 
     def handle_response_to_login_request(self):

@@ -8,6 +8,13 @@ class Sender(object):
         self.__http_session = self.__app_session.session
         self.__host = self.__app_session.cfg.backend_address
 
+# ----------------------------------------------- Healthcheck requests ----------------------------------------------- #
+
+    def send_healthcheck_request(self):
+        url = f"{self.__host}/cml-bench/rest/version"
+        response = self.__http_session.get(url)
+        return response
+
 # ---------------------------------------------- Authorization requests ---------------------------------------------- #
 
     def send_login_request(self, username, password, remember_me=False):

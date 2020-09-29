@@ -3,8 +3,10 @@ import requests
 import uuid
 from core.network.sender import Sender
 from core.network.handler import Handler
+from core.modules.healthcheck import Healthcheck
 from core.modules.authorization import Authorization
 from core.modules.workflow import WorkFlow
+from ui.console import terminal
 
 
 class AppSession(object):
@@ -77,6 +79,13 @@ class AppSession(object):
 
     def execute(self):
         try:
+            healthcheck = Healthcheck(self)
+            state = healthcheck.get_status()
+            if state is not None:
+                terminal.show_healthcheck_info(version=state[0], status=state[1])
+            else:
+                raise ValueError("Healthcheck failed")
+
             authorization = Authorization(self)
             status = authorization.cml_bench_sign_in()
 

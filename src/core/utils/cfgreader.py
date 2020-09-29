@@ -18,7 +18,7 @@ def read_application_config(cfg_name):
                                      .format(current_line_number))
                 else:
                     key = line.split(':')[0].strip().lower()
-                    value = ':'.join([s.strip().lower() for s in line.split(':')[1:]])
+                    value = ':'.join([s.strip() for s in line.split(':')[1:]])
                     info[key] = value
             line = cfg.readline()
             current_line_number += 1

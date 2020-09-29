@@ -24,6 +24,16 @@ def set_output_type(num):
             Output.FULL = False
 
 
+def show_healthcheck_info(version, status):
+    print(f"{colorama.Fore.CYAN}CML-Bench Version: {colorama.Style.RESET_ALL}"
+          f"{colorama.Fore.LIGHTCYAN_EX}{version}{colorama.Style.RESET_ALL}")
+    if status == "success":
+        color = colorama.Fore.LIGHTGREEN_EX
+    else:
+        color = colorama.Fore.LIGHTGREEN_EX
+    print(f"{colorama.Fore.CYAN}Status           : {colorama.Style.RESET_ALL}{color}{status}{colorama.Style.RESET_ALL}")
+
+
 def request_string_input(message=None):
     if message:
         return input(message + ": ")
