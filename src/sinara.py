@@ -4,8 +4,8 @@ import inspect
 from core.modules.cfginfo import ConfigurationInformation
 from ui.console import terminal, argparser
 import sys
-import traceback
 from core.main.appsession import AppSession
+from core.utils.exception_manager import handle_unexpected_exception
 
 
 def main():
@@ -20,8 +20,6 @@ def main():
     terminal.show_info_message(f"Local storage  : {config_info.local_storage}")
     terminal.show_info_message(f"Server storage : {config_info.server_storage}")
 
-    info = ""
-    trace = ""
     code = 0
 
     credentials_file = None
@@ -48,7 +46,7 @@ def main():
 
         add_dsp = arguments.d
         if add_dsp:
-            terminal.set_output_type(2)
+            terminal.Output.set_type(2)
 
     # TODO: add -r key for restart
     #       after script run, write `lck` file with current time and host name
@@ -57,7 +55,7 @@ def main():
 
     if config_info.status_code != 0:
         terminal.show_error_message(config_info.status_description)
-        sys.exit(config_info.status_code)
+        return config_info.status_code
     else:
         try:
             app_session = AppSession(root=root_path,
@@ -67,21 +65,20 @@ def main():
                                      res=save_results)
             app_session.execute()
         except Exception as e:
-            info = str(e)
-            trace = traceback.format_exc()
-            code = -100
-        else:
-            info = "Finished."
-            code = 0
-        finally:
-            if code == 0:
-                terminal.show_info_message(info)
-            else:
-                terminal.show_error_message(info)
-                if trace:
-                    terminal.show_error_message(trace)
-            sys.exit(code)
+            handle_unexpected_exception(e)
+            return -666
+
+    return 0
+
+
+def terminate(code):
+    if code == 0:
+        terminal.show_info_message("Success")
+    else:
+        terminal.show_error_message("Failed with code {}", code)
+    sys.exit(code)
 
 
 if __name__ == "__main__":
-    main()
+    status = main()
+    terminate(status)

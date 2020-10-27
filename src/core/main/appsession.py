@@ -7,6 +7,8 @@ from core.modules.healthcheck import Healthcheck
 from core.modules.authorization import Authorization
 from core.modules.workflow import WorkFlow
 from ui.console import terminal
+from core.utils.decorators import method_info
+from core.utils.exception_manager import handle_unexpected_exception
 
 
 class AppSession(object):
@@ -77,6 +79,7 @@ class AppSession(object):
     def results_path(self):
         return self.__save_results_path
 
+    @method_info
     def execute(self):
         try:
             healthcheck = Healthcheck(self)
@@ -94,10 +97,6 @@ class AppSession(object):
                 # God bless this script
                 workflow.process_json()
         except Exception as e:
-            import traceback
-            print(e)
-            print(traceback.format_exc())
-        else:
-            pass
+            raise Exception(e)
         finally:
             self.__http_session.close()

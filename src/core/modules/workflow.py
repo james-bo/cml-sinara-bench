@@ -5,6 +5,7 @@ import core.bench.entities
 from ui.console import terminal
 from core.dao.local_data_manager import JSONDataManager
 from core.network.timeout import Timeout
+from core.utils.decorators import method_info
 
 # ----------------------------------------------- Supported JSON Types ----------------------------------------------- #
 
@@ -427,9 +428,24 @@ class WorkFlow(object):
                 terminal.show_info_message("JSON behaviour: Solving. Building workflow graph...")
                 for data in self.__json_data.values():
                     self.__graph.add_vertex(data)
-                terminal.show_info_objects("Workflow graph vertices: ", list(self.graph.vertices.values()))
+
+                s = ""
+                vals = []
+                for v in self.graph.vertices.values():
+                    s += terminal.get_blank() + "{}\n"
+                    vals.append(v)
+                terminal.show_info_message("Workflow graph vertices:\n" + s, *vals)
+                # terminal.show_info_objects("Workflow graph vertices: ", list(self.graph.vertices.values()))
+
                 self.__graph.build_graph_edges()
-                terminal.show_info_objects("Workflow graph edges: ", list(self.graph.edges))
+
+                s = ""
+                vals = []
+                for v in self.graph.edges:
+                    s += terminal.get_blank() + "{}\n"
+                    vals.append(v)
+                terminal.show_info_message("Workflow graph edges:\n" + s, *vals)
+                # terminal.show_info_objects("Workflow graph edges: ", list(self.graph.edges))
 
             elif self.__json_behaviour == JSONTypes.UPDATE_TARGETS.value:
                 terminal.show_info_message("JSON behaviour: Update targets.")
@@ -457,6 +473,7 @@ class WorkFlow(object):
     def json_type(self):
         return self.__json_behaviour
 
+    @method_info
     def process_json(self):
         """
         Processing input JSON file
@@ -484,17 +501,18 @@ class WorkFlow(object):
         else:
             terminal.show_warning_message(f"Cannot process JSON with behaviour: {self.json_type}")
 
+    @method_info
     def _run_all_tasks(self):
         """
         Processing input JSON with behaviour `Solve`
         Run all simulations in graph vertices.
         :return:
         """
-        terminal.method_info(self._run_all_tasks, self.app_session.sid)
 
         if self.json_type != JSONTypes.SOLVE.value:
             raise ValueError("Method `run_all_tasks()` can not be called for JSON of type `{}`".format(self.json_type))
 
+        @method_info
         def status_based_behaviour(vertex):
             """
             Define main loop behaviour while walking through vertex basing on vertex status
@@ -504,7 +522,6 @@ class WorkFlow(object):
                                      0: current simulation is not done yet, continue
                                      1: current simulation is done
             """
-            terminal.method_info(status_based_behaviour, None, vertex)
             assert isinstance(vertex, Vertex)
             terminal.show_info_message(f"Processing vertex with ID: {vertex.identifier}")
 
@@ -588,7 +605,16 @@ class WorkFlow(object):
         # initialize dictionary for saving loop results
         rs = {key: 0 for key in [v.identifier for v in vertices]}
 
-        terminal.show_info_dict("Initial state of results storage", rs)
+        # terminal.show_info_dict("Initial state of results storage", rs)
+
+        s = ""
+        vals = []
+        for k, v in rs.items():
+            s += terminal.get_blank() + "{} → {}\n"
+            vals.append(k)
+            vals.append(v)
+
+        terminal.show_info_message("Initial state of results storage:\n" + s, *vals)
 
         # main loop - while all tasks are done or some failure occurred
         while not stop_main_loop:
@@ -642,7 +668,16 @@ class WorkFlow(object):
             stop_main_loop = all(item == 1 for item in rs.values()) or any(item == -1 for item in rs.values())
 
             # terminal.show_info_message(f"List of vertices results status: {str(rs)}")
-            terminal.show_info_dict("Current state of results storage", rs)
+            # terminal.show_info_dict("Current state of results storage", rs)
+
+            s = ""
+            vals = []
+            for k, v in rs.items():
+                s += terminal.get_blank() + "{} → {}\n"
+                vals.append(k)
+                vals.append(v)
+
+            terminal.show_info_message("Initial state of results storage:\n" + s, *vals)
 
             if not stop_main_loop:
                 terminal.show_info_message(f"Waiting for the next loop ... [{WorkFlow.WALK_INTERVAL} sec]")
@@ -650,6 +685,7 @@ class WorkFlow(object):
             else:
                 terminal.show_info_message("Terminating main loop ...")
 
+    @method_info
     def _change_targets(self):
         """
         Processing input JSON with behaviour `Update targets`
@@ -688,6 +724,7 @@ class WorkFlow(object):
                         parent_loadcase.identifier
                     ))
 
+    @method_info
     def _collect_values(self):
         """
         Collect all available key results from all current simulations

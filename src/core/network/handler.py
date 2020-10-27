@@ -1,5 +1,6 @@
 # coding: utf-8
 from ui.console import terminal
+from core.utils.decorators import method_info
 
 
 class Handler(object):
@@ -8,11 +9,13 @@ class Handler(object):
         self.__app_session = app_session
         self.__http_session = self.__app_session.session
 
+    @method_info
     def set_response(self, response):
         self.__response = response
 
 # ----------------------------------------------- Healthcheck requests ----------------------------------------------- #
 
+    @method_info
     def handle_response_to_healthcheck_request(self):
         response_json = self.__response.json()
         if response_json is not None and isinstance(response_json, dict):
@@ -24,6 +27,7 @@ class Handler(object):
 
 # ---------------------------------------------- Authorization requests ---------------------------------------------- #
 
+    @method_info
     def handle_response_to_login_request(self):
         """
         Handles response to login request
@@ -40,6 +44,7 @@ class Handler(object):
 
 # --------------------------------------------- Common entities requests --------------------------------------------- #
 
+    @method_info
     def handle_response_to_entity_base_info_request(self):
         """
         Handles response to basic information about CML-Bench entity: name, parent ID, path in tree, tree ID
@@ -90,6 +95,7 @@ class Handler(object):
 
 # ------------------------------------------------ Loadcase requests ------------------------------------------------- #
 
+    @method_info
     def handle_response_to_loadcase_simulations_request(self):
         """
         Handles response to loadcase simulations request
@@ -111,6 +117,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading loadcase simulations!")
         return None
 
+    @method_info
     def handle_response_to_loadcase_targets_request(self):
         """
         Handles response to loadcase targets request
@@ -146,6 +153,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading loadcase targets!")
         return None
 
+    @method_info
     def handle_response_to_add_loadcase_target_request(self):
         """
         Handles response to add new loadcase target request
@@ -173,6 +181,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during adding new target value!")
         return None
 
+    @method_info
     def handle_response_to_remove_loadcase_target_request(self):
         """
         Handles response to delete target from loadcase
@@ -187,6 +196,7 @@ class Handler(object):
 
 # ----------------------------------------------- Simulation requests ------------------------------------------------ #
 
+    @method_info
     def handle_response_to_clone_simulation_request(self):
         """
         Handles response to clone simulation request
@@ -200,6 +210,7 @@ class Handler(object):
         terminal.show_error_message("Failed to clone simulation.")
         return None
 
+    @method_info
     def handle_response_to_simulation_tasks_request(self):
         """
         Handles response to simulation tasks request
@@ -221,6 +232,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation tasks!")
         return None
 
+    @method_info
     def handle_response_to_simulation_submodels_request(self):
         """
         Handles response to simulation submodels request
@@ -243,6 +255,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation submodels!")
         return None
 
+    @method_info
     def handle_response_to_simulation_files_request(self):
         """
         Handles response to simulation files request
@@ -264,6 +277,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading simulation files!")
         return None
 
+    @method_info
     def handle_response_to_task_defaults_request(self):
         """
         Handles response to default task parameters request
@@ -281,6 +295,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading task defaults of this simulation!")
         return None
 
+    @method_info
     def handle_response_to_download_file_request(self):
         """
         Handles response to download file requeest
@@ -291,6 +306,7 @@ class Handler(object):
             return response.content
         return None
 
+    @method_info
     def handle_response_to_run_request(self):
         """
         Handles response to run request
@@ -307,6 +323,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during sending simulation to run!")
         return None
 
+    @method_info
     def handle_response_to_simulation_values_request(self):
         """
         Handles response to simulation key results
@@ -352,6 +369,7 @@ class Handler(object):
 
 # -------------------------------------------------- Task requests --------------------------------------------------- #
 
+    @method_info
     def handle_response_to_task_status_response(self):
         """
         Handles response to task status request
@@ -365,6 +383,7 @@ class Handler(object):
         terminal.show_error_message("Failed to get task status.")
         return None
 
+    @method_info
     def handle_response_to_task_estimations_response(self):
         """
         Handles response to task estimations
@@ -383,6 +402,7 @@ class Handler(object):
 
 # ------------------------------------------------ Submodel requests ------------------------------------------------- #
 
+    @method_info
     def handle_response_to_upload_submodel_request(self):
         """
         Handles response to upload submodel request
@@ -422,6 +442,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during uploading new submodel!")
         return None
 
+    @method_info
     def handle_response_to_stype_submodels_requests(self):
         """
         Handles response to s|type submodels request
@@ -441,6 +462,7 @@ class Handler(object):
         terminal.show_error_message("There were some errors during reading s|type submodels!")
         return None
 
+    @method_info
     def handle_response_to_delete_submodel_from_server_request(self):
         """
         Handles response to delete submodel from server request

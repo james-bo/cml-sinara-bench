@@ -1,8 +1,8 @@
 # CML Sinara Bench
 
 ## Description
-* Program version: 0.8
-* Date: 29/09/2020
+* Program version: 0.9.0
+* Date: 27/10/2020
 
 ## Run
 ```shell script

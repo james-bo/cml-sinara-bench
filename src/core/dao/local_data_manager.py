@@ -1,6 +1,7 @@
 # coding: utf-8
 import json
 import core.modules.workflow
+from core.utils.decorators import method_info
 
 
 class JSONDataManager(object):
@@ -10,6 +11,7 @@ class JSONDataManager(object):
     def __init__(self, json_file):
         self.__json = json_file
 
+    @method_info
     def get_behaviour(self):
         """
         Method returns a string representing desired behaviour
@@ -26,6 +28,7 @@ class JSONDataManager(object):
                 return beh
         return None
 
+    @method_info
     def get_json_data(self):
         """
         Method returns a dictionary containing structured input data information
@@ -49,6 +52,7 @@ class JSONDataManager(object):
         return None
 
     @staticmethod
+    @method_info
     def dump_data(data, file):
         """
         Writes specified data into .json file
