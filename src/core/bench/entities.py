@@ -415,6 +415,17 @@ class Simulation(AbstractEntity):
             return Simulation(self._app_session, cloned_simulation_id)
         return None
 
+    def erase_submodels(self):
+        """
+        Removes all existing submodels from current simulation
+        :return: true if success, false otherwise
+        """
+        response = self._sender.send_simulation_submodels_update_request(self.identifier, [])
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        status = self._handler.handle_response_to_simulation_submodels_erase_request()
+        return status
+
     @method_info
     def get_submodels(self):
         """
@@ -654,17 +665,28 @@ class SubmodelType(AbstractEntity):
             response = self._sender.send_upload_submodel_request(file, stype.tree_id, add_to_clipboard)
             Timeout.hold_your_horses()
             self._handler.set_response(response)
-            submodel_id_result = self._handler.handle_response_to_upload_submodel_request()
-            if submodel_id_result and not isinstance(submodel_id_result, list):
-                submodels.append(Submodel(self._app_session, submodel_id_result))
-            if submodel_id_result and isinstance(submodel_id_result, list):
-                # there are duplicates, hence deleting all but original
-                for submodel_id in submodel_id_result:
-                    response = self._sender.send_delete_submodel_from_server_request(submodel_id)
+            result = self._handler.handle_response_to_upload_submodel_request()
+            if result is not None:
+                submodel_ids_to_delete = result["to_delete"]
+                submodel_ids_for_simulation = result["to_insert"]
+
+                if len(submodel_ids_to_delete) == 0:
+                    terminal.show_info_message("Uploaded submodel id to use in simulation: {}",
+                                               submodel_ids_for_simulation[0])
+                    submodels.append(Submodel(self._app_session, submodel_ids_for_simulation[0]))
+                else:
+                    terminal.show_warning_message("Uploaded submodel duplicates already existing submodel")
+                    terminal.show_warning_message("Created submodel with id {} will be deleted",
+                                                  submodel_ids_to_delete[0])
+                    response = self._sender.send_delete_submodel_from_server_request(submodel_ids_to_delete[0])
                     Timeout.hold_your_horses()
                     self._handler.set_response(response)
                     _ = self._handler.handle_response_to_delete_submodel_from_server_request()
-                    terminal.show_warning_message("Duplicates was deleted")
+                    terminal.show_warning_message("Duplicate was deleted")
+                    terminal.show_info_message("Already existing submodel id to use in simulation: {}",
+                                               submodel_ids_for_simulation[0])
+                    submodels.append(Submodel(self._app_session, submodel_ids_for_simulation[0]))
+
         return submodels
 
 # ------------------------------------------------- Submodel Object -------------------------------------------------- #

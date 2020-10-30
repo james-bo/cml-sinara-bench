@@ -233,6 +233,17 @@ class Handler(object):
         return None
 
     @method_info
+    def handle_response_to_simulation_submodels_erase_request(self):
+        """
+        Handles response to simulation submodels erase request
+        Server returns empty response
+        :return: true if response status code is 200, otherwise false
+        """
+        if self.__response.status_code == 200:
+            return True
+        return False
+
+    @method_info
     def handle_response_to_simulation_submodels_request(self):
         """
         Handles response to simulation submodels request
@@ -406,18 +417,24 @@ class Handler(object):
     def handle_response_to_upload_submodel_request(self):
         """
         Handles response to upload submodel request
-        :return: uploaded submodel ID, or list of duplicates IDs, or None, of some error occurred
+        :return: dict with keys `to_insert` and `to_delete`, or None, of some error occurred
         """
         response_json = self.__response.json()
         if response_json and isinstance(response_json, dict):
+            result = {"to_insert": [], "to_delete": []}
+
             status = response_json.get("status")
+            # if status is `success` get ids of uploaded submodels from set
             if status == "success":
                 submodels = response_json.get("set")
                 if submodels and isinstance(submodels, list):
                     if len(submodels) > 0:
                         if isinstance(submodels[0], dict):
                             submodel_id = submodels[0].get("id")
-                            return submodel_id
+                            result["to_insert"].append(submodel_id)
+                            return result
+            # if status is `warning` get ids of original submodels from duplicates
+            # assuming that we uploading a single file every time
             if status == "warning":
                 duplicates = response_json.get("duplicates")
                 if duplicates and isinstance(duplicates, list):
@@ -425,20 +442,17 @@ class Handler(object):
                     if len(duplicates) > 0:
                         if isinstance(duplicates[0], dict):
                             created_object = duplicates[0].get("createdObject")
-                            # Bench by default gets duplicates over all of its storage thus
-                            # getting parent id, and filtering all submodels which belong to the parent directory
-                            created_object_pid = created_object.get("pid")
-                            duplicate_objects = duplicates[0].get("duplicateObjects")
-                            if duplicate_objects and isinstance(duplicates, list):
-                                duplicates_id = []
-                                for submodel in duplicate_objects[1:]:  # duplicate_objects[0] is original submodel
-                                    submodel_pid = submodel.get("pid")
-                                    if submodel_pid == created_object_pid:
-                                        submodel_id = submodel.get("id")
-                                        duplicates_id.append(submodel_id)
+                            if created_object and isinstance(created_object, dict):
                                 created_object_id = created_object.get("id")
-                                duplicates_id.append(created_object_id)
-                                return duplicates_id
+                                result["to_delete"].append(created_object_id)
+                            duplicate_objects = duplicates[0].get("duplicateObjects")
+                            if duplicate_objects and isinstance(duplicate_objects, list):
+                                if len(duplicate_objects) > 0:
+                                    original_object = duplicate_objects[0]
+                                    if isinstance(original_object, dict):
+                                        original_object_id = original_object.get("id")
+                                        result["to_insert"].append(original_object_id)
+                                        return result
         terminal.show_error_message("There were some errors during uploading new submodel!")
         return None
 
@@ -480,16 +494,16 @@ class Handler(object):
             response_json = self.__response.json()
             if response_json and isinstance(response_json, dict):
                 message = response_json.get("message")
-                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"".format(
-                    message))
+                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"",
+                                            message)
                 return None
 
         if response.status_code == 403:
             response_json = self.__response.json()
             if response_json and isinstance(response_json, dict):
                 message = response_json.get("message")
-                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"".format(
-                    message))
+                terminal.show_error_message("There were conflicts during deleting submodel from server: \"{}\"",
+                                            message)
                 return None
 
         # print(response)

@@ -539,13 +539,19 @@ class WorkFlow(object):
                 vertex.current_simulation = current_simulation
                 if current_simulation:
                     # if cloned successfully, upload submodels
-                    terminal.show_info_message(f"Cloned simulation ID: {vertex.current_simulation.identifier}")
+                    terminal.show_info_message("Cloned simulation ID: {}", vertex.current_simulation.identifier)
                     terminal.show_info_message("Uploading submodels for current simulation...")
                     stype = vertex.stype
                     uploaded_submodels = stype.upload_submodel(*vertex.submodels)
                     # uploaded_submodels_ids = [submodel.identifier for submodel in uploaded_submodels]
+                    terminal.show_info_message("Erasing current (cloned) simulation submodels...")
+                    status = current_simulation.erase_submodels()
+                    if status:
+                        terminal.show_info_message("Done")
+                    else:
+                        terminal.show_error_message("Failed")
                     _ = current_simulation.add_submodels(*uploaded_submodels)
-                    terminal.show_info_message(f"{len(uploaded_submodels)} submodels added for current simulations")
+                    terminal.show_info_message("{} submodels added for current simulations", len(uploaded_submodels))
                     # start with default parameters
                     terminal.show_info_message("Trying to run current simulation...")
                     # obtain default parameters to run tasks from base simulation
@@ -565,20 +571,20 @@ class WorkFlow(object):
             #   - download vertex results
             #   - save status; when all vertices will have the same status, loop can be stopped
             elif vertex.status == "Finished":
-                terminal.show_info_message(f"Vertex status: {vertex.status}")
+                terminal.show_info_message("Vertex status: {}", vertex.status)
                 if len(vertex.results) == 0:
                     terminal.show_info_message("No results selected for download")
                 else:
                     terminal.show_info_message("Downloading results...")
                     current_simulation = vertex.current_simulation
                     lst = current_simulation.download_files(*vertex.results)
-                    terminal.show_info_message(f"Successfully downloaded {len(lst)} files")
+                    terminal.show_info_message("Successfully downloaded {} files", len(lst))
                 return 1
 
             # if status is "Failed",
             #   - terminate main loop
             elif vertex.status in ["Failed", "failed", "Error", "error"]:
-                terminal.show_warning_message(f"Vertex status: {vertex.status}")
+                terminal.show_warning_message("Vertex status: {}", vertex.status)
                 return -1
 
             # if status is unknown,
@@ -590,9 +596,9 @@ class WorkFlow(object):
                     current_status = current_task.get_status()
                     vertex.status = current_status
                     task_end_waiting, task_end_solving = current_task.get_time_estimation()
-                    terminal.show_info_message(f"Current task estimated end waiting time: {task_end_waiting}")
-                    terminal.show_info_message(f"Current task estimated end solving time: {task_end_solving}")
-                terminal.show_info_message(f"Vertex status: {vertex.status}")
+                    terminal.show_info_message("Current task estimated end waiting time: {}", task_end_waiting)
+                    terminal.show_info_message("Current task estimated end solving time: {}", task_end_solving)
+                terminal.show_info_message("Vertex status: {}", vertex.status)
                 return 0
 
         # --- main section --- main section --- main section --- main section --- main section --- main section ---
@@ -628,22 +634,22 @@ class WorkFlow(object):
                 # check vertex links
                 # if links list is empty, vertex is at root level and it's simulation can be started
                 if len(v.links) == 0:
-                    terminal.show_info_message(f"Vertex {v.identifier} has no linked vertices")
+                    terminal.show_info_message("Vertex {} has no linked vertices", v.identifier)
                     r = status_based_behaviour(v)
-                    terminal.show_info_message(f"Current vertex result status: {r}")
+                    terminal.show_info_message("Current vertex result status: {}", r)
                     rs[v.identifier] = r
                     # terminal.show_info_message(f"Current state of the list of vertices results status: {str(rs)}")
                     if r == -1:
-                        terminal.show_error_message(f"Failed while processing vertex {v.identifier}")
+                        terminal.show_error_message("Failed while processing vertex {}", v.identifier)
                         # stop_main_loop = True
                         break
                     if r == 1:
-                        terminal.show_info_message(f"Vertex {v.identifier} is done")
+                        terminal.show_info_message("Vertex {} is done", v.identifier)
                         del vertices[i]
 
                 # else, if links list is not empty,
                 else:
-                    terminal.show_info_message(f"Vertex {v.identifier} has {len(v.links)} linked vertices")
+                    terminal.show_info_message("Vertex {} has {} linked vertices", v.identifier, len(v.links))
                     terminal.show_info_message("Checking status of linked vertices...")
 
                     # check status of all linked vertices
@@ -652,15 +658,15 @@ class WorkFlow(object):
                         # current vertex can run
                         terminal.show_info_message("All linked vertices successfully finished")
                         r = status_based_behaviour(v)
-                        terminal.show_info_message(f"Current vertex result status: {r}")
+                        terminal.show_info_message("Current vertex result status: {}", r)
                         rs[v.identifier] = r
                         # terminal.show_info_message(f"Current state of the list of vertices results status: {str(rs)}")
                         if r == -1:
-                            terminal.show_error_message(f"Failed while processing vertex {v.identifier}")
+                            terminal.show_error_message("Failed while processing vertex {}", v.identifier)
                             # stop_main_loop = True
                             break
                         if r == 1:
-                            terminal.show_info_message(f"Vertex {v.identifier} is done")
+                            terminal.show_info_message("Vertex {} is done", v.identifier)
                             del vertices[i]
                     else:
                         terminal.show_info_message("Some linked vertices is not finished yet...")
