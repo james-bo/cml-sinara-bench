@@ -314,6 +314,23 @@ class Simulation(AbstractEntity):
         self._setup_attributes()
 
     @method_info
+    def set_description(self, description):
+        payload = {"description": str(description)}
+        response = self._sender.send_modify_simulation_request(payload)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        result = self._handler.handle_response_to_update_simulation_request(description=description)
+        return result
+
+    @method_info
+    def get_description(self):
+        response = self._sender.send_entity_base_info_request(self.identifier, EntityTypes.SIMULATION.value)
+        Timeout.hold_your_horses()
+        self._handler.set_response(response)
+        result = self._handler.handle_response_to_entity_base_info_request()
+        return result.get("description")
+
+    @method_info
     def get_loadcase(self):
         """
         :return: parent loadcase of current simulation
@@ -415,6 +432,7 @@ class Simulation(AbstractEntity):
             return Simulation(self._app_session, cloned_simulation_id)
         return None
 
+    @method_info
     def erase_submodels(self):
         """
         Removes all existing submodels from current simulation

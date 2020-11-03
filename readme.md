@@ -1,8 +1,8 @@
 # CML Sinara Bench
 
 ## Description
-* Program version: 0.9.0
-* Date: 27/10/2020
+* Program version: 0.9.1
+* Date: 03/11/2020
 
 ## Run
 ```shell script
@@ -26,8 +26,10 @@ python sinara.py [-h] -j $path_to_JSON_file [-k] [-v $path_to_folder] [-d]
 |--------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 |`vertex_id`         |*int*              |Unique identifier of object in JSON file                                                                                                |
 |`loadcase_id`       |*int* &#x7c; *null*|Loadcase ID from CML-Bench, or *null*, if unknown. In this case Loadcase ID will be restored from the base simulation                   |
+|`loadcase_name`     |*str* &#x7c; *null*|Loadcase name, corresponding to `loadcase_id`, or *null*, if unknown.                                                                   |
 |`base_simulation_id`|*int*              |Base simulation ID from CML-Bench                                                                                                       |
 |`curr_simulation_id`|*int* &#x7c; *null*|Current simulation ID from CML-Bench, or *null*, if unknown (for new tasks)                                                             |
+|`description`       |*str*              |Description for current simulation                                                                                                      |
 |`curr_task_id`      |*int* &#x7c; *null*|Current task ID from CML-Bench, or *null*, if unknown (for new tasks)                                                                   |
 |`curr_task_status`  |*str*              |Task status of current simulation. For the first time must be *"New"*                                                                   |
 |`solver`            |*str* &#x7c; *null*|Solver name, or *null*, if unknown. In this case value obtained from the base simulation will be used                                   |

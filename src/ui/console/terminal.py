@@ -141,6 +141,11 @@ def show_post_request(url):
         __colored_message("network", "POST   > {}", url)
 
 
+def show_put_request(url):
+    if Output.REQUESTS:
+        __colored_message("network", "PUT    > {}", url)
+
+
 def show_delete_request(url):
     if Output.REQUESTS:
         __colored_message("network", "DELETE > {}", url)

@@ -7,6 +7,7 @@ from core.dao.local_data_manager import JSONDataManager
 from core.network.timeout import Timeout
 from core.utils.decorators import method_info
 
+
 # ----------------------------------------------- Supported JSON Types ----------------------------------------------- #
 
 
@@ -20,33 +21,22 @@ class JSONTypes(enum.Enum):
 
 
 class JSONProps(enum.Enum):
-    # TODO: change name of property "bench_id" to "curr_simulation_id"
-    #       change name of property "object_id" to "vertex_id"
-    #       change name of property "task_id" to "curr_task_id"
-    #       change name of property "task_status" to "curr_task_status"
-    #       change name of property "storyboard" to "storyboard_id"
-    #       change name of property "current_values" to "values"
-    #       add property "loadcase_id"
-
     VERTEX_ID = "vertex_id"
-    # VERTEX_ID = "object_id"
     LOADCASE_ID = "loadcase_id"
+    LOADCASE_NAME = "loadcase_name"
     BASE_SIMULATION_ID = "base_simulation_id"
     CURR_SIMULATION_ID = "curr_simulation_id"
-    # CURR_SIMULATION_ID = "bench_id"
+    DESCRIPTION = "description"
     CURR_TASK_ID = "curr_task_id"
-    # CURR_TASK_ID = "task_id"
     VERTEX_STATUS = "curr_task_status"
-    # VERTEX_STATUS = "task_status"
     SOLVER = "solver"
     STORYBOARD = "storyboard_id"
-    # STORYBOARD = "storyboard"
     SUBMODELS = "submodels"
     RESULTS = "results"
     PARENTS = "parents"
     TARGETS = "targets"
     VALUES = "values"
-    # VALUES = "current_values"
+
 
 # --------------------------------------------------- Graph Vertex --------------------------------------------------- #
 
@@ -58,14 +48,19 @@ class Vertex(object):
 
         # ----------------------------- All possible parameters written in graph vertex ------------------------------ #
 
-        # • Vertex ID (`object_id` in JSON)
+        # • Vertex ID (`vertex_id` in JSON)
         self.__vertex_id = None
+
+        # • Loadcase ID (`loadcase_id` in JSON)
+        self.__loadcase = None
 
         # • Base (Reference) simulation (`bases_simulation_id` is its identifier)
         self.__base_simulation = None
 
-        # • Current simulation (`bench_id` is current simulation identifier)
+        # • Current simulation (`curr_simulation_id` is current simulation identifier)
         self.__current_simulation = None
+
+        self.__description = None
 
         # • Current task (`task_id` in JSON)
         self.__current_task = None
@@ -104,6 +99,16 @@ class Vertex(object):
         if JSONProps.VERTEX_ID.value in data.keys():
             self.__vertex_id = data.get(JSONProps.VERTEX_ID.value)
 
+        if JSONProps.LOADCASE_ID.value in data.keys():
+            lc_id = data.get(JSONProps.LOADCASE_ID.value)
+            if lc_id is not None:
+                self.__loadcase = core.bench.entities.Loadcase(self.app_session, lc_id)
+
+        if self.__loadcase is not None and JSONProps.LOADCASE_NAME.value in data.keys():
+            lc_name = data.get(JSONProps.LOADCASE_NAME.value)
+            if lc_name != self.__loadcase.name:
+                terminal.show_error_message("Mismatch given \"loadcase_name\" and name restored from \"loadcase_id\"")
+
         if JSONProps.BASE_SIMULATION_ID.value in data.keys():
             base_sim_id = data.get(JSONProps.BASE_SIMULATION_ID.value)
             if base_sim_id is not None:
@@ -111,10 +116,20 @@ class Vertex(object):
             else:
                 terminal.show_error_message("Base (Reference) simulation is not defined in JSON file")
 
+        if self.__loadcase is not None and self.__base_simulation is not None:
+            if (self.__base_simulation.get_loadcase().identifier != self.__loadcase.identifier or
+                    self.__base_simulation.get_loadcase().name != self.__loadcase.name):
+                terminal.show_error_message("Mismatch given loadcase and loadcase restored from base simulation")
+
         if JSONProps.CURR_SIMULATION_ID.value in data.keys():
             curr_sim_id = data.get(JSONProps.CURR_SIMULATION_ID.value)
             if curr_sim_id is not None:
                 self.__current_simulation = core.bench.entities.Simulation(self.app_session, curr_sim_id)
+
+        if JSONProps.DESCRIPTION.value in data.keys():
+            description = data.get(JSONProps.DESCRIPTION.value)
+            if description is not None:
+                self.__description = description
 
         if JSONProps.CURR_TASK_ID.value in data.keys():
             curr_task_id = data.get(JSONProps.CURR_TASK_ID.value)
@@ -182,6 +197,13 @@ class Vertex(object):
         return self.__vertex_id
 
     @property
+    def loadcase(self):
+        """
+        :return: Loadcase object
+        """
+        return self.__loadcase
+
+    @property
     def base_simulation(self):
         """
         :return: Base (Reference) simulation object
@@ -203,6 +225,10 @@ class Vertex(object):
         """
         assert isinstance(current_simulation, core.bench.entities.Simulation)
         self.__current_simulation = current_simulation
+
+    @property
+    def description(self):
+        return self.__description
 
     @property
     def current_task(self):
@@ -327,6 +353,7 @@ class Vertex(object):
         assert isinstance(vertex, Vertex)
         self.__links.append(vertex)
 
+
 # -------------------------------------------------- Workflow Graph -------------------------------------------------- #
 
 
@@ -384,11 +411,11 @@ class Graph(object):
                     self.__edges.append((vertex, parent_vertex))
                     vertex.add_link(parent_vertex)
 
+
 # ----------------------------------------------------- Workflow ----------------------------------------------------- #
 
 
 class WorkFlow(object):
-
     WALK_INTERVAL = 10  # 10 seconds
 
     __instance = None
@@ -523,7 +550,7 @@ class WorkFlow(object):
                                      1: current simulation is done
             """
             assert isinstance(vertex, Vertex)
-            terminal.show_info_message(f"Processing vertex with ID: {vertex.identifier}")
+            terminal.show_info_message("Processing vertex with ID: {}", vertex.identifier)
 
             # if status is "New",
             #   - clone base simulation
@@ -531,11 +558,14 @@ class WorkFlow(object):
             #   - run cloned (current vertex) simulation
             #   - update vertex status from simulation task status
             if vertex.status == "New":
-                terminal.show_info_message(f"Vertex status: {vertex.status}")
-                terminal.show_info_message(f"Vertex base simulation ID: {vertex.base_simulation.identifier}")
+                terminal.show_info_message("Vertex status: {}", vertex.status)
+                terminal.show_info_message("Vertex base simulation ID: {}", vertex.base_simulation.identifier)
                 base_simulation = vertex.base_simulation
                 terminal.show_info_message("Trying to clone base simulation...")
                 current_simulation = base_simulation.clone()
+                terminal.show_info_message("Modify current simulation description...")
+                current_simulation.set_description(vertex.description)
+                terminal.show_info_message("Update vertex current simulation...")
                 vertex.current_simulation = current_simulation
                 if current_simulation:
                     # if cloned successfully, upload submodels
@@ -711,24 +741,26 @@ class WorkFlow(object):
 
         for v in vertices:
             base_simulation = v.base_simulation
+            vertex_loadcase = v.loadcase
             parent_loadcase = base_simulation.get_loadcase()
+            if vertex_loadcase.identifier != parent_loadcase.identifier:
+                terminal.show_error_message("Mismatch loadcase from `loadcase_id` "
+                                            "and parent loadcase from `base_simulation_id`")
+            lc = vertex_loadcase if vertex_loadcase is not None else parent_loadcase
             targets = v.targets
             for t in targets:
-                ans = parent_loadcase.add_target(t.get("name"),
-                                                 t.get("value"),
-                                                 t.get("condition"),
-                                                 t.get("dimension"),
-                                                 t.get("tolerance"),
-                                                 t.get("description"))
+                ans = lc.add_target(t.get("name"),
+                                    t.get("value"),
+                                    t.get("condition"),
+                                    t.get("dimension"),
+                                    t.get("tolerance"),
+                                    t.get("description"))
                 if ans is not None:
-                    terminal.show_info_message("Successfully added target {} to loadcase {}".format(
-                        ans.identifier,
-                        parent_loadcase.identifier
-                    ))
+                    terminal.show_info_message("Successfully added target {} to loadcase {}",
+                                               ans.identifier,
+                                               lc.identifier)
                 else:
-                    terminal.show_error_message("Failed to add target to loadcase {}".format(
-                        parent_loadcase.identifier
-                    ))
+                    terminal.show_error_message("Failed to add target to loadcase {}", lc.identifier)
 
     @method_info
     def _collect_values(self):

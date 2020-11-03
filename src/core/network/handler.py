@@ -48,17 +48,22 @@ class Handler(object):
     def handle_response_to_entity_base_info_request(self):
         """
         Handles response to basic information about CML-Bench entity: name, parent ID, path in tree, tree ID
-        :return: dictionary with keys `name`, `parent_id`, `tree_path`, `tree_id`
+        :return: dictionary with keys `name`, `parent_id`, `tree_path`, `tree_id`, `description`
         """
         response_json = self.__response.json()
         info = {"name": None,
                 "parent_id": None,
                 "tree_path": None,
-                "tree_id": None}
+                "tree_id": None,
+                "description": None}
 
         if response_json and isinstance(response_json, dict):
             name = response_json.get("name")
             info["name"] = name
+
+            description = response_json.get("description")
+            if description is not None:
+                info["description"] = description
 
             links = response_json.get("links")
             if links and isinstance(links, list):
@@ -195,6 +200,22 @@ class Handler(object):
         return None
 
 # ----------------------------------------------- Simulation requests ------------------------------------------------ #
+
+    @method_info
+    def handle_response_to_update_simulation_request(self, **params):
+        """
+        Handles response to update simulation
+        :param params: parameters which were updated
+        :return: True if updated successfully, otherwise False
+        """
+        response_json = self.__response.json()
+        if response_json and isinstance(response_json, dict):
+            for key in params.keys():
+                if key not in response_json.keys():
+                    return False
+                if params.get(key) != response_json.get(key):
+                    return False
+        return True
 
     @method_info
     def handle_response_to_clone_simulation_request(self):

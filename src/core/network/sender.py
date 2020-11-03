@@ -78,6 +78,13 @@ class Sender(object):
 # ----------------------------------------------- Simulation requests ------------------------------------------------ #
 
     @method_info
+    def send_modify_simulation_request(self, entity_id, payload):
+        url = f"{self.__host}/rest/simulation/{entity_id}"
+        terminal.show_put_request(url)
+        response = self.__http_session.put(url, json=payload)
+        return response
+
+    @method_info
     def send_clone_simulation_request(self, entity_id, add_to_clipboard=False, dmu_id=None):
         url = f"{self.__host}/rest/simulation/{entity_id}/clone"
         terminal.show_post_request(url)
