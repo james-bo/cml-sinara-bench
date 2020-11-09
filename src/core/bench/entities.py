@@ -316,7 +316,7 @@ class Simulation(AbstractEntity):
     @method_info
     def set_description(self, description):
         payload = {"description": str(description)}
-        response = self._sender.send_modify_simulation_request(payload)
+        response = self._sender.send_modify_simulation_request(self.identifier, payload)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
         result = self._handler.handle_response_to_update_simulation_request(description=description)
