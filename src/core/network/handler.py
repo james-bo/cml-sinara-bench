@@ -98,6 +98,11 @@ class Handler(object):
 
         return info
 
+    @method_info
+    def get_full_server_base_response(self):
+        response_json = self.__response.json()
+        return response_json
+
 # ------------------------------------------------ Loadcase requests ------------------------------------------------- #
 
     @method_info

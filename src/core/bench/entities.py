@@ -315,12 +315,20 @@ class Simulation(AbstractEntity):
 
     @method_info
     def set_description(self, description):
-        payload = {"description": str(description)}
-        response = self._sender.send_modify_simulation_request(self.identifier, payload)
+        response = self._sender.send_entity_base_info_request(self.identifier, self.entity_type.value)
         Timeout.hold_your_horses()
         self._handler.set_response(response)
-        result = self._handler.handle_response_to_update_simulation_request(description=description)
-        return result
+        payload = self._handler.get_full_server_base_response()
+        if isinstance(payload, dict) and "description" in payload.keys():
+            payload["description"] = str(description)
+            response = self._sender.send_modify_simulation_request(self.identifier, payload)
+            Timeout.hold_your_horses()
+            self._handler.set_response(response)
+            result = self._handler.handle_response_to_update_simulation_request(description=description)
+            return result
+        else:
+            terminal.show_error_message("No description found in server response")
+            return None
 
     @method_info
     def get_description(self):

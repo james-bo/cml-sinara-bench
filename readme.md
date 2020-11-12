@@ -1,16 +1,16 @@
 # CML Sinara Bench
 
 ## Description
-* Program version: 0.9.1
-* Date: 03/11/2020
+* Program version: 0.9.2
+* Date: 12/11/2020
 
 ## Run
 ```shell script
-python sinara.py [-h] -j $path_to_JSON_file [-k] [-v $path_to_folder] [-d]
+python sinara.py [-h] -j $path_to_JSON_file [-k $path_to_credentials] [-v $path_to_folder] [-d]
 ```
 * `-h` shows help message and exit
 * `-j` select JSON (**mandatory argument**)
-* `-k` if there is a file with username and password in `./cfg` directory
+* `-k` if there is a file with username and password, user can pass a path to it and authorize with specified credentials
 * `-v` if JSON is of type *Solve* writes all simulation key results into output file `results.json` in selected directory
 * `-d` shows additional debug information in terminal
 
